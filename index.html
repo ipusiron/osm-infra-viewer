@@ -8,6 +8,10 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+    
     <style>
         * {
             margin: 0;
@@ -182,6 +186,58 @@
         .marker-tower { background: #3498db; }
         .marker-wifi { background: #f39c12; }
 
+        /* クラスタのカスタムスタイル */
+        .marker-cluster {
+            background: rgba(102, 126, 234, 0.6);
+            border: 3px solid rgba(102, 126, 234, 0.8);
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .marker-cluster-small {
+            width: 40px;
+            height: 40px;
+            line-height: 37px;
+        }
+
+        .marker-cluster-medium {
+            width: 50px;
+            height: 50px;
+            line-height: 47px;
+            font-size: 16px;
+        }
+
+        .marker-cluster-large {
+            width: 60px;
+            height: 60px;
+            line-height: 57px;
+            font-size: 18px;
+        }
+
+        /* インフラ種別ごとのクラスタ色 */
+        .cluster-surveillance {
+            background: rgba(231, 76, 60, 0.6);
+            border-color: rgba(231, 76, 60, 0.8);
+        }
+
+        .cluster-tower {
+            background: rgba(52, 152, 219, 0.6);
+            border-color: rgba(52, 152, 219, 0.8);
+        }
+
+        .cluster-wifi {
+            background: rgba(243, 156, 18, 0.6);
+            border-color: rgba(243, 156, 18, 0.8);
+        }
+
+        .cluster-mixed {
+            background: rgba(149, 165, 166, 0.6);
+            border-color: rgba(149, 165, 166, 0.8);
+        }
+
         #debug-controls {
             margin-top: 1rem;
             padding-top: 1rem;
@@ -289,6 +345,15 @@
             <div class="legend-marker marker-wifi"></div>
             <span>Wi-Fiホットスポット (internet_access=wlan)</span>
         </div>
+        <hr style="margin: 10px 0; border-color: #eee;">
+        <div style="font-size: 0.85rem; color: #666;">
+            <strong>📊 クラスタリング機能</strong><br>
+            密集エリアでは自動的にグループ化されます。クラスタをクリックするとズームして詳細表示。<br>
+            <span style="color: #e74c3c;">●</span> 監視カメラ主体
+            <span style="color: #3498db;">●</span> 基地局主体
+            <span style="color: #f39c12;">●</span> Wi-Fi主体
+            <span style="color: #95a5a6;">●</span> 混在
+        </div>
     </div>
 
     <div style="margin-top: 30px; padding: 15px; text-align: center; border-top: 1px solid #000000; color: #6c757d;">
@@ -302,6 +367,9 @@
     <!-- Leaflet JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     
+    <!-- Leaflet MarkerCluster JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+    
     <script>
         // 地図の初期化
         let map = L.map('map').setView([35.6762, 139.6503], 13); // 東京駅付近
@@ -311,8 +379,60 @@
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // マーカーグループ
-        let markersGroup = L.layerGroup().addTo(map);
+        // マーカークラスターグループの作成
+        let markersGroup = L.markerClusterGroup({
+            // クラスタリングの設定
+            maxClusterRadius: 50, // クラスタ化する最大距離（ピクセル）
+            spiderfyOnMaxZoom: true, // 最大ズーム時にスパイダー表示
+            showCoverageOnHover: false, // ホバー時の範囲表示を無効
+            zoomToBoundsOnClick: true, // クリック時にズーム
+            disableClusteringAtZoom: 18, // ズームレベル18以上でクラスタ無効
+            
+            // カスタムクラスタアイコンを作成
+            iconCreateFunction: function(cluster) {
+                const markers = cluster.getAllChildMarkers();
+                let surveillanceCount = 0;
+                let towerCount = 0;
+                let wifiCount = 0;
+                
+                // 各マーカーのタイプをカウント
+                markers.forEach(marker => {
+                    const type = marker.options.infraType;
+                    if (type === 'surveillance') surveillanceCount++;
+                    else if (type === 'tower') towerCount++;
+                    else if (type === 'wifi') wifiCount++;
+                });
+                
+                const childCount = cluster.getChildCount();
+                let clusterClass = 'marker-cluster-';
+                let infraClass = 'cluster-mixed';
+                
+                // サイズクラスを決定
+                if (childCount < 10) {
+                    clusterClass += 'small';
+                } else if (childCount < 50) {
+                    clusterClass += 'medium';
+                } else {
+                    clusterClass += 'large';
+                }
+                
+                // 主要なインフラタイプを決定
+                const maxCount = Math.max(surveillanceCount, towerCount, wifiCount);
+                if (surveillanceCount === maxCount && surveillanceCount > childCount * 0.6) {
+                    infraClass = 'cluster-surveillance';
+                } else if (towerCount === maxCount && towerCount > childCount * 0.6) {
+                    infraClass = 'cluster-tower';
+                } else if (wifiCount === maxCount && wifiCount > childCount * 0.6) {
+                    infraClass = 'cluster-wifi';
+                }
+                
+                return new L.DivIcon({
+                    html: `<div><span>${childCount}</span></div>`,
+                    className: `marker-cluster ${clusterClass} ${infraClass}`,
+                    iconSize: new L.Point(40, 40)
+                });
+            }
+        }).addTo(map);
 
         // ステータス表示
         function showStatus(message, type = 'loading') {
@@ -381,26 +501,30 @@
                 return {
                     color: '#e74c3c',
                     icon: '📹',
-                    type: 'CCTVカメラ'
+                    type: 'CCTVカメラ',
+                    infraType: 'surveillance'
                 };
             } else if (tags.man_made === 'communications_tower') {
                 return {
                     color: '#3498db',
                     icon: '📡',
-                    type: '携帯基地局'
+                    type: '携帯基地局',
+                    infraType: 'tower'
                 };
             } else if (tags.internet_access === 'wlan') {
                 return {
                     color: '#f39c12',
                     icon: '📶',
-                    type: 'Wi-Fiホットスポット'
+                    type: 'Wi-Fiホットスポット',
+                    infraType: 'wifi'
                 };
             }
             
             return {
                 color: '#95a5a6',
                 icon: '📍',
-                type: 'その他'
+                type: 'その他',
+                infraType: 'other'
             };
         }
 
@@ -484,7 +608,8 @@
                     color: '#fff',
                     weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.8,
+                    infraType: markerInfo.infraType // クラスタリング用のタイプ情報
                 });
 
                 const popupContent = generatePopupContent(element, markerInfo);
@@ -663,6 +788,58 @@ out center meta;`;
             }
         }
 
+        // クラスタ情報表示（開発者モード）
+        function showClusterInfo() {
+            const totalMarkers = markersGroup.getLayers().length;
+            const clusters = [];
+            
+            // 表示中のクラスタを収集
+            markersGroup.eachLayer(function(layer) {
+                if (layer instanceof L.MarkerCluster) {
+                    const markers = layer.getAllChildMarkers();
+                    let surveillance = 0, tower = 0, wifi = 0, other = 0;
+                    
+                    markers.forEach(marker => {
+                        const type = marker.options.infraType;
+                        if (type === 'surveillance') surveillance++;
+                        else if (type === 'tower') tower++;
+                        else if (type === 'wifi') wifi++;
+                        else other++;
+                    });
+                    
+                    clusters.push({
+                        count: markers.length,
+                        surveillance, tower, wifi, other,
+                        bounds: layer.getBounds()
+                    });
+                }
+            });
+            
+            console.log('📊 クラスタ分析結果');
+            console.log('総マーカー数:', totalMarkers);
+            console.log('クラスタ数:', clusters.length);
+            console.log('平均クラスタサイズ:', clusters.length > 0 ? (totalMarkers / clusters.length).toFixed(1) : 0);
+            console.log('クラスタ詳細:', clusters);
+            
+            // 統計情報を計算
+            let totalSurveillance = 0, totalTower = 0, totalWifi = 0, totalOther = 0;
+            markersGroup.eachLayer(function(layer) {
+                if (layer.options && layer.options.infraType) {
+                    const type = layer.options.infraType;
+                    if (type === 'surveillance') totalSurveillance++;
+                    else if (type === 'tower') totalTower++;
+                    else if (type === 'wifi') totalWifi++;
+                    else totalOther++;
+                }
+            });
+            
+            const clusteringRatio = clusters.length > 0 ? ((totalMarkers - clusters.length) / totalMarkers * 100).toFixed(1) : 0;
+            
+            showStatus(`クラスタ分析完了 - クラスタリング率: ${clusteringRatio}%`, 'success');
+            
+            alert(`📊 クラスタ分析結果\n\n総マーカー数: ${totalMarkers}\n━━━━━━━━━━━━━━━━━━━━\n📹 CCTVカメラ: ${totalSurveillance}\n📡 携帯基地局: ${totalTower}\n📶 Wi-Fi: ${totalWifi}\n📍 その他: ${totalOther}\n━━━━━━━━━━━━━━━━━━━━\nアクティブクラスタ数: ${clusters.length}\nクラスタリング効率: ${clusteringRatio}%\n\n詳細はコンソールを確認してください。`);
+        }
+
         // テスト地点にジャンプ
         function jumpToTestLocation() {
             // 監視カメラや通信設備が多い地域を選択
@@ -729,6 +906,7 @@ out center meta;`;
                     <button class="search-btn" onclick="showDebugInfo()" style="background: #95a5a6;">🔧 デバッグ情報</button>
                     <button class="search-btn" onclick="jumpToTestLocation()" style="background: #e67e22;">📍 テスト地点</button>
                     <button class="search-btn" onclick="testSimpleQuery()" style="background: #27ae60;">🧪 簡単テスト</button>
+                    <button class="search-btn" onclick="showClusterInfo()" style="background: #8e44ad;">📊 クラスタ情報</button>
                 `;
                 toggleButton.textContent = '⚙️ 開発者モード ON';
                 toggleButton.style.background = '#28a745';
