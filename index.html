@@ -102,6 +102,62 @@
             margin-right: 1.5rem;
         }
 
+        /* ツールチップスタイル */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 0.8rem;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* モバイル対応: タッチデバイスではツールチップを下に表示 */
+        @media (max-width: 768px) {
+            .tooltip .tooltiptext {
+                top: 125%;
+                bottom: auto;
+                width: 180px;
+                margin-left: -90px;
+            }
+            
+            .tooltip .tooltiptext::after {
+                top: -10px;
+                border-color: transparent transparent #333 transparent;
+            }
+        }
+
         .btn:hover:not(:disabled) {
             transform: translateY(-1px);
         }
@@ -646,7 +702,10 @@
             <button class="btn btn-primary" id="searchBtn" onclick="searchInfrastructure()">🔍 検索</button>
             <button class="btn btn-info btn-spacing" onclick="showResultSummary()">📊 検索結果サマリー</button>
             <button class="btn btn-info" onclick="showExportDialog()">💾 データ出力</button>
-            <button class="btn btn-secondary" onclick="toggleDebugMode()">⚙️ 開発者モード</button>
+            <div class="tooltip">
+                <button class="btn btn-secondary" onclick="toggleDebugMode()">⚙️ 開発者モード</button>
+                <span class="tooltiptext">デバッグ情報表示、テスト地点ジャンプ、簡単テストなどの開発者向け機能が利用できます</span>
+            </div>
         </div>
 
         <!-- デバッグモード -->
