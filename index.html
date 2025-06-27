@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSMインフラ可視化ツール（OSM Infrastructure Viewer）</title>
+    <title>OSMインフラ可視化ツール - 包括的インフラマッピング</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
@@ -56,19 +56,44 @@
 
         .control-group {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.5rem;
+            flex-direction: column;
         }
 
         .control-group label {
             font-weight: 500;
             color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkbox-groups-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            width: 100%;
         }
 
         .checkbox-group {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 0.8rem;
+            background: #f8f9fa;
+        }
+
+        .checkbox-group-title {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .checkbox-group-items {
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 0.3rem;
         }
 
         .checkbox-item {
@@ -185,8 +210,113 @@
         .marker-surveillance { background: #e74c3c; }
         .marker-tower { background: #3498db; }
         .marker-wifi { background: #f39c12; }
+        .marker-police { background: #c0392b; }
+        .marker-emergency { background: #e67e22; }
+        .marker-antenna { background: #9b59b6; }
+        .marker-substation { background: #f1c40f; }
+        .marker-power_pole { background: #d68910; }
+        .marker-generator { background: #28b463; }
+        .marker-traffic_signals { background: #dc143c; }
+        .marker-speed_camera { background: #8b0000; }
+        .marker-fuel_station { background: #ff6b6b; }
+        .marker-atm { background: #2ecc71; }
+        .marker-post_box { background: #e74c3c; }
+        .marker-waste_disposal { background: #7f8c8d; }
 
-        /* クラスタのカスタムスタイル */
+        /* ポップアップのカスタムスタイル */
+        .leaflet-popup-content {
+            width: auto !important;
+            max-width: 400px !important;
+            min-width: 300px !important;
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            margin: -10px -10px 15px -10px;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .popup-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .popup-table th {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            width: 35%;
+        }
+
+        .popup-table td {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            color: #212529;
+            word-break: break-word;
+        }
+
+        .popup-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .popup-table tr:hover {
+            background: #e9ecef;
+        }
+
+        .popup-metadata {
+            font-size: 12px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
+            margin-top: 15px;
+        }
+
+        .popup-coordinates {
+            font-family: 'Courier New', monospace;
+            background: #f1f3f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .popup-tag-category {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+
+        .popup-external-links {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .popup-external-links a {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 4px 8px;
+            background: #17a2b8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .popup-external-links a:hover {
+            background: #138496;
+        }
         .marker-cluster {
             background: rgba(102, 126, 234, 0.6);
             border: 3px solid rgba(102, 126, 234, 0.8);
@@ -276,8 +406,17 @@
                 padding: 0.8rem;
             }
             
+            .checkbox-groups-container {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+            
             .checkbox-group {
-                gap: 0.5rem;
+                padding: 0.6rem;
+            }
+            
+            .checkbox-group-items {
+                gap: 0.2rem;
             }
             
             #debug-controls {
@@ -297,13 +436,39 @@
             .legend {
                 margin: 0.5rem;
             }
+            
+            .legend > div[style*="grid"] {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            /* モバイル用ポップアップ調整 */
+            .leaflet-popup-content {
+                max-width: 280px !important;
+                min-width: 250px !important;
+            }
+            
+            .popup-table {
+                font-size: 12px;
+            }
+            
+            .popup-table th,
+            .popup-table td {
+                padding: 6px 8px;
+            }
+            
+            .popup-external-links a {
+                display: block;
+                margin: 5px 0;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🗺️ OSMインフラ可視化ツール（OSM Infrastructure Viewer）</h1>
-        <p>OpenStreetMapのインフラ系オブジェクト（CCTV、基地局、Wi-Fi）を可視化するツール</p>
+        <p>OpenStreetMapの多様なインフラオブジェクト（監視、通信、電力、交通等）を可視化するツール</p>
     </div>
 
     <div class="controls">
@@ -344,18 +509,78 @@
     </div>
 
     <div class="legend">
-        <h3>凡例</h3>
-        <div class="legend-item">
-            <div class="legend-marker marker-surveillance"></div>
-            <span>CCTVカメラ (man_made=surveillance)</span>
+        <h3>凡例（主要オブジェクト）</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem;">
+            <div>
+                <strong>🔒 監視・セキュリティ</strong>
+                <div class="legend-item">
+                    <div class="legend-marker marker-surveillance"></div>
+                    <span>📹 CCTVカメラ</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-police"></div>
+                    <span>🚓 警察関連</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-emergency"></div>
+                    <span>🆘 緊急電話</span>
+                </div>
+            </div>
+            
+            <div>
+                <strong>📡 通信・ネットワーク</strong>
+                <div class="legend-item">
+                    <div class="legend-marker marker-tower"></div>
+                    <span>📡 携帯基地局</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-wifi"></div>
+                    <span>📶 Wi-Fi</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-antenna"></div>
+                    <span>📻 アンテナ</span>
+                </div>
+            </div>
+            
+            <div>
+                <strong>⚡ 電力・エネルギー</strong>
+                <div class="legend-item">
+                    <div class="legend-marker marker-substation"></div>
+                    <span>⚡ 変電所</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-power_pole"></div>
+                    <span>🗼 電柱・鉄塔</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-generator"></div>
+                    <span>🔋 発電機</span>
+                </div>
+            </div>
+            
+            <div>
+                <strong>🚦 交通・その他</strong>
+                <div class="legend-item">
+                    <div class="legend-marker marker-traffic_signals"></div>
+                    <span>🚦 信号機</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-atm"></div>
+                    <span>🏧 ATM</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker marker-fuel_station"></div>
+                    <span>⛽ ガソリンスタンド</span>
+                </div>
+            </div>
         </div>
-        <div class="legend-item">
-            <div class="legend-marker marker-tower"></div>
-            <span>携帯基地局 (man_made=communications_tower)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-marker marker-wifi"></div>
-            <span>Wi-Fiホットスポット (internet_access=wlan)</span>
+        
+        <hr style="margin: 10px 0; border-color: #eee;">
+        <div style="font-size: 0.85rem; color: #666;">
+            <strong>🔍 詳細情報表示</strong><br>
+            マーカーをクリックすると詳細な情報パネルが表示されます。OSMタグ、座標、外部リンクを含む包括的な情報を確認できます。<br>
+            <strong>外部リンク:</strong> OpenStreetMap、Google Maps、Street View への直接アクセス
         </div>
         <hr style="margin: 10px 0; border-color: #eee;">
         <div style="font-size: 0.85rem; color: #666;">
@@ -470,15 +695,31 @@
         function buildOverpassQuery(bounds) {
             const selectedTypes = [];
             
-            if (document.getElementById('surveillance').checked) {
-                selectedTypes.push('surveillance');
-            }
-            if (document.getElementById('tower').checked) {
-                selectedTypes.push('tower');
-            }
-            if (document.getElementById('wifi').checked) {
-                selectedTypes.push('wifi');
-            }
+            // 各オブジェクトタイプのOSMタグ定義
+            const objectTypes = {
+                surveillance: ['man_made=surveillance', 'surveillance'],
+                police: ['amenity=police', 'emergency=police'],
+                emergency: ['emergency=phone', 'amenity=emergency_phone'],
+                tower: ['man_made=communications_tower', 'man_made=tower', 'tower:type=communication'],
+                wifi: ['internet_access=wlan', 'amenity=internet_cafe'],
+                antenna: ['man_made=mast', 'man_made=antenna'],
+                substation: ['power=substation', 'power=station'],
+                power_pole: ['power=pole', 'power=tower', 'man_made=utility_pole'],
+                generator: ['power=generator', 'man_made=generator'],
+                traffic_signals: ['highway=traffic_signals'],
+                speed_camera: ['highway=speed_camera', 'man_made=monitoring_station'],
+                fuel_station: ['amenity=fuel'],
+                atm: ['amenity=atm'],
+                post_box: ['amenity=post_box'],
+                waste_disposal: ['amenity=waste_disposal', 'man_made=waste_disposal']
+            };
+
+            // 選択されたオブジェクトタイプを収集
+            Object.keys(objectTypes).forEach(type => {
+                if (document.getElementById(type) && document.getElementById(type).checked) {
+                    selectedTypes.push({type: type, tags: objectTypes[type]});
+                }
+            });
 
             if (selectedTypes.length === 0) {
                 return null;
@@ -488,23 +729,18 @@
             
             let query = '[out:json][timeout:25];\n(\n';
             
-            selectedTypes.forEach(type => {
-                if (type === 'surveillance') {
-                    // 監視カメラ - より広範囲なクエリ
-                    query += `  node["man_made"="surveillance"](${bbox});\n`;
-                    query += `  way["man_made"="surveillance"](${bbox});\n`;
-                    query += `  node["surveillance"](${bbox});\n`;
-                } else if (type === 'tower') {
-                    // 通信塔・基地局
-                    query += `  node["man_made"="communications_tower"](${bbox});\n`;
-                    query += `  node["man_made"="tower"]["tower:type"="communication"](${bbox});\n`;
-                    query += `  node["man_made"="mast"](${bbox});\n`;
-                } else if (type === 'wifi') {
-                    // Wi-Fi関連
-                    query += `  node["internet_access"="wlan"](${bbox});\n`;
-                    query += `  node["amenity"="internet_cafe"](${bbox});\n`;
-                    query += `  node["amenity"="cafe"]["internet_access"="wlan"](${bbox});\n`;
-                }
+            selectedTypes.forEach(typeInfo => {
+                typeInfo.tags.forEach(tag => {
+                    if (tag.includes('=')) {
+                        const [key, value] = tag.split('=');
+                        query += `  node["${key}"="${value}"](${bbox});\n`;
+                        query += `  way["${key}"="${value}"](${bbox});\n`;
+                    } else {
+                        // 属性のみ指定（値は任意）
+                        query += `  node["${tag}"](${bbox});\n`;
+                        query += `  way["${tag}"](${bbox});\n`;
+                    }
+                });
             });
             
             query += ');\nout center meta;';
@@ -516,26 +752,123 @@
         function getMarkerInfo(element) {
             const tags = element.tags || {};
             
-            if (tags.man_made === 'surveillance') {
+            // 監視・セキュリティ系
+            if (tags.man_made === 'surveillance' || tags.surveillance) {
                 return {
                     color: '#e74c3c',
                     icon: '📹',
                     type: 'CCTVカメラ',
                     infraType: 'surveillance'
                 };
-            } else if (tags.man_made === 'communications_tower') {
+            } else if (tags.amenity === 'police' || tags.emergency === 'police') {
+                return {
+                    color: '#c0392b',
+                    icon: '🚓',
+                    type: '警察関連施設',
+                    infraType: 'police'
+                };
+            } else if (tags.emergency === 'phone' || tags.amenity === 'emergency_phone') {
+                return {
+                    color: '#e67e22',
+                    icon: '🆘',
+                    type: '緊急電話',
+                    infraType: 'emergency'
+                };
+            }
+            
+            // 通信・ネットワーク系
+            else if (tags.man_made === 'communications_tower' || tags.man_made === 'tower' || tags['tower:type'] === 'communication') {
                 return {
                     color: '#3498db',
                     icon: '📡',
                     type: '携帯基地局',
                     infraType: 'tower'
                 };
-            } else if (tags.internet_access === 'wlan') {
+            } else if (tags.internet_access === 'wlan' || tags.amenity === 'internet_cafe') {
                 return {
                     color: '#f39c12',
                     icon: '📶',
                     type: 'Wi-Fiホットスポット',
                     infraType: 'wifi'
+                };
+            } else if (tags.man_made === 'mast' || tags.man_made === 'antenna') {
+                return {
+                    color: '#9b59b6',
+                    icon: '📻',
+                    type: 'アンテナ・マスト',
+                    infraType: 'antenna'
+                };
+            }
+            
+            // 電力・エネルギー系
+            else if (tags.power === 'substation' || tags.power === 'station') {
+                return {
+                    color: '#f1c40f',
+                    icon: '⚡',
+                    type: '変電所',
+                    infraType: 'substation'
+                };
+            } else if (tags.power === 'pole' || tags.power === 'tower' || tags.man_made === 'utility_pole') {
+                return {
+                    color: '#d68910',
+                    icon: '🗼',
+                    type: '電柱・鉄塔',
+                    infraType: 'power_pole'
+                };
+            } else if (tags.power === 'generator' || tags.man_made === 'generator') {
+                return {
+                    color: '#28b463',
+                    icon: '🔋',
+                    type: '発電機',
+                    infraType: 'generator'
+                };
+            }
+            
+            // 交通・輸送系
+            else if (tags.highway === 'traffic_signals') {
+                return {
+                    color: '#dc143c',
+                    icon: '🚦',
+                    type: '信号機',
+                    infraType: 'traffic_signals'
+                };
+            } else if (tags.highway === 'speed_camera' || tags.man_made === 'monitoring_station') {
+                return {
+                    color: '#8b0000',
+                    icon: '📸',
+                    type: '交通監視カメラ',
+                    infraType: 'speed_camera'
+                };
+            } else if (tags.amenity === 'fuel') {
+                return {
+                    color: '#ff6b6b',
+                    icon: '⛽',
+                    type: 'ガソリンスタンド',
+                    infraType: 'fuel_station'
+                };
+            }
+            
+            // その他のインフラ
+            else if (tags.amenity === 'atm') {
+                return {
+                    color: '#2ecc71',
+                    icon: '🏧',
+                    type: 'ATM',
+                    infraType: 'atm'
+                };
+            } else if (tags.amenity === 'post_box') {
+                return {
+                    color: '#e74c3c',
+                    icon: '📮',
+                    type: '郵便ポスト',
+                    infraType: 'post_box'
+                };
+            } else if (tags.amenity === 'waste_disposal' || tags.man_made === 'waste_disposal') {
+                return {
+                    color: '#7f8c8d',
+                    icon: '🗑️',
+                    type: 'ゴミ処理施設',
+                    infraType: 'waste_disposal'
                 };
             }
             
@@ -547,43 +880,105 @@
             };
         }
 
-        // ポップアップの内容を生成
+        // ポップアップの内容を生成（拡張版）
         function generatePopupContent(element, markerInfo) {
             const tags = element.tags || {};
-            let content = `<div style="min-width: 200px;">`;
-            content += `<h4 style="margin: 0 0 10px 0; color: ${markerInfo.color};">${markerInfo.icon} ${markerInfo.type}</h4>`;
+            const lat = element.lat || (element.center ? element.center.lat : 0);
+            const lon = element.lon || (element.center ? element.center.lon : 0);
             
-            // 重要な属性を優先表示
-            const importantKeys = ['name', 'operator', 'surveillance:type', 'tower:type', 'height', 'description'];
-            const displayedKeys = new Set();
+            // ヘッダー部分
+            let content = `<div class="popup-header">
+                ${markerInfo.icon} ${markerInfo.type}
+            </div>`;
             
-            importantKeys.forEach(key => {
-                if (tags[key]) {
-                    content += `<div><strong>${key}:</strong> ${tags[key]}</div>`;
-                    displayedKeys.add(key);
+            // 基本情報テーブル
+            content += `<table class="popup-table">`;
+            
+            // 重要なタグを優先表示
+            const priorityTags = [
+                { key: 'name', label: '名称', category: '基本' },
+                { key: 'operator', label: '運営者', category: '基本' },
+                { key: 'surveillance:type', label: '監視タイプ', category: '監視' },
+                { key: 'surveillance:zone', label: '監視範囲', category: '監視' },
+                { key: 'camera:type', label: 'カメラ種別', category: '監視' },
+                { key: 'camera:mount', label: '設置方法', category: '監視' },
+                { key: 'height', label: '高さ', category: '物理' },
+                { key: 'tower:type', label: 'タワー種別', category: '通信' },
+                { key: 'communication:mobile_phone', label: '携帯電話対応', category: '通信' },
+                { key: 'communication:radio', label: 'ラジオ対応', category: '通信' },
+                { key: 'internet_access', label: 'インターネット', category: 'ネット' },
+                { key: 'internet_access:fee', label: '利用料金', category: 'ネット' },
+                { key: 'wifi', label: 'Wi-Fi', category: 'ネット' },
+                { key: 'addr:street', label: '街路', category: '住所' },
+                { key: 'addr:housenumber', label: '番地', category: '住所' },
+                { key: 'addr:city', label: '市区町村', category: '住所' }
+            ];
+            
+            // 優先タグを表示
+            let displayedTags = new Set();
+            priorityTags.forEach(tagInfo => {
+                if (tags[tagInfo.key]) {
+                    content += `<tr>
+                        <th><span class="popup-tag-category">${tagInfo.category}</span>${tagInfo.label}</th>
+                        <td>${escapeHtml(tags[tagInfo.key])}</td>
+                    </tr>`;
+                    displayedTags.add(tagInfo.key);
                 }
             });
             
-            // その他の属性
-            const otherTags = Object.keys(tags).filter(key => !displayedKeys.has(key));
+            // その他のタグを表示
+            const otherTags = Object.keys(tags)
+                .filter(key => !displayedTags.has(key) && !['man_made', 'amenity'].includes(key))
+                .sort();
+                
             if (otherTags.length > 0) {
-                content += `<hr style="margin: 10px 0;">`;
+                content += `<tr><th colspan="2" style="background: #e9ecef; text-align: center; font-weight: bold;">その他の属性</th></tr>`;
                 otherTags.forEach(key => {
-                    if (key !== 'man_made' && key !== 'internet_access') {
-                        content += `<div><strong>${key}:</strong> ${tags[key]}</div>`;
+                    const value = tags[key];
+                    if (value && value.length > 0) {
+                        content += `<tr>
+                            <th><span class="popup-tag-category">その他</span>${escapeHtml(key)}</th>
+                            <td>${escapeHtml(value)}</td>
+                        </tr>`;
                     }
                 });
             }
             
-            content += `<hr style="margin: 10px 0;">`;
-            content += `<div style="font-size: 0.8em; color: #666;">`;
-            content += `<div>ID: ${element.id}</div>`;
-            if (element.lat && element.lon) {
-                content += `<div>位置: ${element.lat.toFixed(6)}, ${element.lon.toFixed(6)}</div>`;
+            content += `</table>`;
+            
+            // 外部リンク
+            content += `<div class="popup-external-links">
+                <a href="https://www.openstreetmap.org/${element.type}/${element.id}" target="_blank">📍 OSMで見る</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank">🗺️ Google Maps</a>
+            `;
+            
+            // ストリートビューリンク（精度が高い場合のみ）
+            if (lat && lon && Math.abs(lat) > 0.001 && Math.abs(lon) > 0.001) {
+                content += `<a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}" target="_blank">👁️ Street View</a>`;
             }
-            content += `</div></div>`;
+            
+            content += `</div>`;
+            
+            // メタデータ
+            content += `<div class="popup-metadata">
+                <div><strong>座標:</strong> <span class="popup-coordinates">${lat.toFixed(6)}, ${lon.toFixed(6)}</span></div>
+                <div><strong>OSM ID:</strong> ${element.type}/${element.id}</div>
+                <div><strong>データ取得:</strong> ${new Date().toLocaleDateString('ja-JP')} ${new Date().toLocaleTimeString('ja-JP')}</div>
+                <div><strong>出典:</strong> © OpenStreetMap contributors</div>
+            </div>`;
             
             return content;
+        }
+
+        // HTMLエスケープ関数
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         // マーカーを地図に追加
@@ -632,7 +1027,24 @@
                 });
 
                 const popupContent = generatePopupContent(element, markerInfo);
-                marker.bindPopup(popupContent);
+                
+                // ポップアップオプションを設定
+                const popupOptions = {
+                    maxWidth: 450,
+                    minWidth: 350,
+                    autoPan: true,
+                    closeButton: true,
+                    autoClose: false,
+                    className: 'custom-popup'
+                };
+                
+                marker.bindPopup(popupContent, popupOptions);
+                
+                // マーカークリック時のイベント
+                marker.on('click', function(e) {
+                    console.log(`📍 マーカークリック: ${markerInfo.type} at ${lat}, ${lon}`);
+                    console.log('OSMタグ:', element.tags);
+                });
                 
                 markersGroup.addLayer(marker);
                 count++;
@@ -735,8 +1147,50 @@
         // ページ読み込み時のメッセージ
         window.addEventListener('load', function() {
             initializeDebugMode(); // デバッグモード初期化
-            showStatus('地図を移動・ズームしてから検索ボタンをクリックしてください', 'success');
+            showStatus('お好みのインフラオブジェクトを選択し、地図を移動・ズームしてから検索ボタンをクリックしてください', 'success');
         });
+
+        // テストマーカーを作成（簡単テスト用）
+        function createTestMarker(lat, lon, tags, type) {
+            const markerInfo = {
+                color: '#27ae60',
+                icon: '🧪',
+                type: 'テストオブジェクト',
+                infraType: 'test'
+            };
+            
+            const marker = L.circleMarker([lat, lon], {
+                radius: 6,
+                fillColor: markerInfo.color,
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8,
+                infraType: 'test'
+            });
+            
+            // テスト用の詳細なポップアップを作成
+            const testElement = {
+                id: `test_${Date.now()}`,
+                type: 'node',
+                lat: lat,
+                lon: lon,
+                tags: tags
+            };
+            
+            const popupContent = generatePopupContent(testElement, markerInfo);
+            const popupOptions = {
+                maxWidth: 450,
+                minWidth: 350,
+                autoPan: true,
+                closeButton: true,
+                autoClose: false,
+                className: 'custom-popup'
+            };
+            
+            marker.bindPopup(popupContent, popupOptions);
+            return marker;
+        }
 
         // 簡単テストクエリ（デバッグ用）
         async function testSimpleQuery() {
@@ -778,18 +1232,14 @@ out center meta;`;
                 
                 data.elements.forEach(element => {
                     if (element.lat && element.lon) {
-                        const marker = L.circleMarker([element.lat, element.lon], {
-                            radius: 6,
-                            fillColor: '#27ae60',
-                            color: '#fff',
-                            weight: 2,
-                            opacity: 1,
-                            fillOpacity: 0.8
-                        });
+                        const marker = createTestMarker(element.lat, element.lon, element.tags || {
+                            name: element.tags?.name || 'テストオブジェクト',
+                            amenity: element.tags?.amenity || element.tags?.shop || 'unknown',
+                            operator: element.tags?.operator || '不明',
+                            'addr:city': element.tags?.['addr:city'] || '',
+                            'test:timestamp': new Date().toISOString()
+                        }, element.tags?.amenity || element.tags?.shop || 'test');
                         
-                        const tags = element.tags || {};
-                        const name = tags.name || tags.amenity || tags.shop || 'Unknown';
-                        marker.bindPopup(`<strong>テスト結果</strong><br>種類: ${name}<br>ID: ${element.id}`);
                         markersGroup.addLayer(marker);
                         count++;
                     }
@@ -816,12 +1266,92 @@ out center meta;`;
                 return;
             }
 
-            const choice = confirm(`現在${totalMarkers}個のオブジェクトがあります。\n\nOK = GeoJSON形式で出力\nキャンセル = KML形式で出力\n\nどちらの形式で出力しますか？`);
+            // カスタムダイアログを作成
+            const dialogHtml = `
+                <div id="export-dialog" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
+                        <h3 style="margin: 0 0 1rem 0; color: #333; text-align: center;">💾 データエクスポート</h3>
+                        <p style="margin: 0 0 1.5rem 0; color: #666; text-align: center;">現在${totalMarkers}個のオブジェクトがあります。<br>どの形式で出力しますか？</p>
+                        
+                        <div style="display: grid; gap: 0.8rem;">
+                            <button onclick="exportToGeoJSON(); closeExportDialog();" style="padding: 0.8rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                                📄 GeoJSON形式で出力<br>
+                                <small style="opacity: 0.8;">Web用・軽量・プログラミング向け</small>
+                            </button>
+                            
+                            <button onclick="exportToKML(); closeExportDialog();" style="padding: 0.8rem; background: #17a2b8; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                                🌍 KML形式で出力<br>
+                                <small style="opacity: 0.8;">Google Earth用・視覚的</small>
+                            </button>
+                            
+                            <button onclick="closeExportDialog();" style="padding: 0.8rem; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500;">
+                                ❌ キャンセル
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
             
-            if (choice) {
-                exportToGeoJSON();
-            } else {
-                exportToKML();
+            // ダイアログをページに追加
+            document.body.insertAdjacentHTML('beforeend', dialogHtml);
+        }
+
+        // 全選択・全解除機能
+        function toggleAllObjects(enable) {
+            const objectTypes = [
+                'surveillance', 'police', 'emergency',
+                'tower', 'wifi', 'antenna',
+                'substation', 'power_pole', 'generator',
+                'traffic_signals', 'speed_camera', 'fuel_station',
+                'atm', 'post_box', 'waste_disposal'
+            ];
+            
+            objectTypes.forEach(type => {
+                const element = document.getElementById(type);
+                if (element) {
+                    element.checked = enable;
+                }
+            });
+            
+            showStatus(enable ? '全てのオブジェクトを選択しました' : '全ての選択を解除しました', 'success');
+        }
+
+        // カテゴリ別選択機能
+        function toggleCategory(category) {
+            const categories = {
+                security: ['surveillance', 'police', 'emergency'],
+                communication: ['tower', 'wifi', 'antenna'],
+                power: ['substation', 'power_pole', 'generator'],
+                traffic: ['traffic_signals', 'speed_camera', 'fuel_station'],
+                other: ['atm', 'post_box', 'waste_disposal']
+            };
+            
+            const types = categories[category];
+            if (!types) return;
+            
+            // 現在の選択状態を確認
+            const currentStates = types.map(type => {
+                const element = document.getElementById(type);
+                return element ? element.checked : false;
+            });
+            
+            // 全て選択されている場合は解除、そうでなければ全選択
+            const allSelected = currentStates.every(state => state);
+            const newState = !allSelected;
+            
+            types.forEach(type => {
+                const element = document.getElementById(type);
+                if (element) {
+                    element.checked = newState;
+                }
+            });
+        }
+
+        // エクスポートダイアログを閉じる
+        function closeExportDialog() {
+            const dialog = document.getElementById('export-dialog');
+            if (dialog) {
+                dialog.remove();
             }
         }
 
@@ -1025,19 +1555,16 @@ out center meta;`;
             markersGroup.eachLayer(function(layer) {
                 if (layer instanceof L.MarkerCluster) {
                     const markers = layer.getAllChildMarkers();
-                    let surveillance = 0, tower = 0, wifi = 0, other = 0;
+                    let infraCounts = {};
                     
                     markers.forEach(marker => {
-                        const type = marker.options.infraType;
-                        if (type === 'surveillance') surveillance++;
-                        else if (type === 'tower') tower++;
-                        else if (type === 'wifi') wifi++;
-                        else other++;
+                        const type = marker.options.infraType || 'other';
+                        infraCounts[type] = (infraCounts[type] || 0) + 1;
                     });
                     
                     clusters.push({
                         count: markers.length,
-                        surveillance, tower, wifi, other,
+                        infraCounts: infraCounts,
                         bounds: layer.getBounds()
                     });
                 }
@@ -1050,14 +1577,11 @@ out center meta;`;
             console.log('クラスタ詳細:', clusters);
             
             // 統計情報を計算
-            let totalSurveillance = 0, totalTower = 0, totalWifi = 0, totalOther = 0;
+            let infraTypeCounts = {};
             markersGroup.eachLayer(function(layer) {
                 if (layer.options && layer.options.infraType) {
                     const type = layer.options.infraType;
-                    if (type === 'surveillance') totalSurveillance++;
-                    else if (type === 'tower') totalTower++;
-                    else if (type === 'wifi') totalWifi++;
-                    else totalOther++;
+                    infraTypeCounts[type] = (infraTypeCounts[type] || 0) + 1;
                 }
             });
             
@@ -1065,7 +1589,12 @@ out center meta;`;
             
             showStatus(`クラスタ分析完了 - クラスタリング率: ${clusteringRatio}%`, 'success');
             
-            alert(`📊 クラスタ分析結果\n\n総マーカー数: ${totalMarkers}\n━━━━━━━━━━━━━━━━━━━━\n📹 CCTVカメラ: ${totalSurveillance}\n📡 携帯基地局: ${totalTower}\n📶 Wi-Fi: ${totalWifi}\n📍 その他: ${totalOther}\n━━━━━━━━━━━━━━━━━━━━\nアクティブクラスタ数: ${clusters.length}\nクラスタリング効率: ${clusteringRatio}%\n\n詳細はコンソールを確認してください。`);
+            // インフラタイプ別の統計を表示
+            const infraStatsText = Object.entries(infraTypeCounts)
+                .map(([type, count]) => `${type}: ${count}`)
+                .join('\n');
+            
+            alert(`📊 クラスタ分析結果\n\n総マーカー数: ${totalMarkers}\n━━━━━━━━━━━━━━━━━━━━\n${infraStatsText}\n━━━━━━━━━━━━━━━━━━━━\nアクティブクラスタ数: ${clusters.length}\nクラスタリング効率: ${clusteringRatio}%\n\n詳細はコンソールを確認してください。`);
         }
 
         // テスト地点にジャンプ
@@ -1092,17 +1621,24 @@ out center meta;`;
             const query = buildOverpassQuery(bounds);
             const totalMarkers = markersGroup.getLayers().length;
             
+            // 選択されたオブジェクト一覧
+            const objectTypes = ['surveillance', 'police', 'emergency', 'tower', 'wifi', 'antenna', 'substation', 'power_pole', 'generator', 'traffic_signals', 'speed_camera', 'fuel_station', 'atm', 'post_box', 'waste_disposal'];
+            const selectedObjects = {};
+            objectTypes.forEach(type => {
+                const element = document.getElementById(type);
+                if (element) {
+                    selectedObjects[type] = element.checked;
+                }
+            });
+            
             console.log('=== 🔧 デバッグ情報 ===');
             console.log('現在位置:', map.getCenter());
             console.log('ズームレベル:', map.getZoom());
             console.log('検索範囲:', bounds);
             console.log('範囲サイズ (緯度):', bounds.getNorth() - bounds.getSouth());
             console.log('範囲サイズ (経度):', bounds.getEast() - bounds.getWest());
-            console.log('選択オブジェクト:', {
-                surveillance: document.getElementById('surveillance').checked,
-                tower: document.getElementById('tower').checked,
-                wifi: document.getElementById('wifi').checked
-            });
+            console.log('選択オブジェクト:', selectedObjects);
+            console.log('選択数:', Object.values(selectedObjects).filter(v => v).length);
             console.log('総マーカー数:', totalMarkers);
             console.log('エクスポート可能:', totalMarkers > 0 ? 'Yes' : 'No');
             console.log('Overpassクエリ:', query);
@@ -1116,9 +1652,10 @@ out center meta;`;
             }
             console.log('===================');
             
+            const selectedCount = Object.values(selectedObjects).filter(v => v).length;
             const turboLink = query ? `\n\n🔗 Overpass Turboでテスト:\nhttps://overpass-turbo.eu/?Q=${encodeURIComponent(query)}&C=${map.getCenter().lat};${map.getCenter().lng};${map.getZoom()}` : '';
             
-            alert(`デバッグ情報をコンソールに出力しました。\n\n現在地: ${map.getCenter().lat.toFixed(4)}, ${map.getCenter().lng.toFixed(4)}\nズーム: ${map.getZoom()}\nマーカー数: ${totalMarkers}\nエクスポート: ${totalMarkers > 0 ? '可能' : '不可'}\n\nF12キーでコンソールを確認してください。${turboLink}`);
+            alert(`デバッグ情報をコンソールに出力しました。\n\n現在地: ${map.getCenter().lat.toFixed(4)}, ${map.getCenter().lng.toFixed(4)}\nズーム: ${map.getZoom()}\n選択オブジェクト: ${selectedCount}種類\nマーカー数: ${totalMarkers}\nエクスポート: ${totalMarkers > 0 ? '可能' : '不可'}\n\nF12キーでコンソールを確認してください。${turboLink}`);
         }
 
         // デバッグモードの状態管理
