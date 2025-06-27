@@ -25,6 +25,14 @@
 
 👉 [https://ipusiron.github.io/osm-infra-viewer/](https://ipusiron.github.io/osm-infra-viewer/)
 
+## スクリーンショット
+
+以下は実際の画面例です。
+
+>![検索結果のマーカーをポップアップ](assets/screenshot.png)
+>
+> *検索結果のマーカーをポップアップ*
+
 ### 主な特徴
 
 - 🌍 **Overpass API経由でリアルタイムにOSMデータを取得**
