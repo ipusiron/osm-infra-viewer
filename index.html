@@ -233,6 +233,7 @@
         <button class="search-btn" onclick="searchInfrastructure()">🔍 検索</button>
         <button class="search-btn" onclick="showDebugInfo()" style="background: #95a5a6;">🔧 デバッグ情報</button>
         <button class="search-btn" onclick="jumpToTestLocation()" style="background: #e67e22;">📍 テスト地点</button>
+        <button class="search-btn" onclick="testSimpleQuery()" style="background: #27ae60;">🧪 簡単テスト</button>
     </div>
 
     <div class="status" id="status"></div>
@@ -294,13 +295,13 @@
             const selectedTypes = [];
             
             if (document.getElementById('surveillance').checked) {
-                selectedTypes.push('man_made=surveillance');
+                selectedTypes.push('surveillance');
             }
             if (document.getElementById('tower').checked) {
-                selectedTypes.push('man_made=communications_tower');
+                selectedTypes.push('tower');
             }
             if (document.getElementById('wifi').checked) {
-                selectedTypes.push('internet_access=wlan');
+                selectedTypes.push('wifi');
             }
 
             if (selectedTypes.length === 0) {
@@ -312,18 +313,25 @@
             let query = '[out:json][timeout:25];\n(\n';
             
             selectedTypes.forEach(type => {
-                if (type === 'internet_access=wlan') {
-                    query += `  node["${type}"](${bbox});\n`;
-                    query += `  way["${type}"](${bbox});\n`;
-                    query += `  relation["${type}"](${bbox});\n`;
-                } else {
-                    query += `  node["${type}"](${bbox});\n`;
-                    query += `  way["${type}"](${bbox});\n`;
-                    query += `  relation["${type}"](${bbox});\n`;
+                if (type === 'surveillance') {
+                    // 監視カメラ - より広範囲なクエリ
+                    query += `  node["man_made"="surveillance"](${bbox});\n`;
+                    query += `  way["man_made"="surveillance"](${bbox});\n`;
+                    query += `  node["surveillance"](${bbox});\n`;
+                } else if (type === 'tower') {
+                    // 通信塔・基地局
+                    query += `  node["man_made"="communications_tower"](${bbox});\n`;
+                    query += `  node["man_made"="tower"]["tower:type"="communication"](${bbox});\n`;
+                    query += `  node["man_made"="mast"](${bbox});\n`;
+                } else if (type === 'wifi') {
+                    // Wi-Fi関連
+                    query += `  node["internet_access"="wlan"](${bbox});\n`;
+                    query += `  node["amenity"="internet_cafe"](${bbox});\n`;
+                    query += `  node["amenity"="cafe"]["internet_access"="wlan"](${bbox});\n`;
                 }
             });
             
-            query += ');\nout geom;';
+            query += ');\nout center meta;';
             
             return query;
         }
@@ -548,15 +556,85 @@
             showStatus('地図を移動・ズームしてから検索ボタンをクリックしてください', 'success');
         });
 
+        // 簡単テストクエリ（デバッグ用）
+        async function testSimpleQuery() {
+            const bounds = map.getBounds();
+            const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
+            
+            // 最もシンプルなクエリ（ATMを検索）
+            const simpleQuery = `[out:json][timeout:25];
+(
+  node["amenity"="atm"](${bbox});
+  node["amenity"="bank"](${bbox});
+  node["shop"="convenience"](${bbox});
+);
+out center meta;`;
+
+            console.log('🧪 簡単テスト開始');
+            console.log('テストクエリ:', simpleQuery);
+            
+            showStatus('簡単テスト実行中（ATM・銀行・コンビニを検索）...', 'loading');
+            
+            try {
+                const response = await fetch('https://overpass-api.de/api/interpreter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'data=' + encodeURIComponent(simpleQuery)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('🧪 テスト結果:', data);
+                
+                markersGroup.clearLayers();
+                let count = 0;
+                
+                data.elements.forEach(element => {
+                    if (element.lat && element.lon) {
+                        const marker = L.circleMarker([element.lat, element.lon], {
+                            radius: 6,
+                            fillColor: '#27ae60',
+                            color: '#fff',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        });
+                        
+                        const tags = element.tags || {};
+                        const name = tags.name || tags.amenity || tags.shop || 'Unknown';
+                        marker.bindPopup(`<strong>テスト結果</strong><br>種類: ${name}<br>ID: ${element.id}`);
+                        markersGroup.addLayer(marker);
+                        count++;
+                    }
+                });
+                
+                showStatus(`テスト成功！${count}個のテストオブジェクトを表示`, 'success');
+                
+                // Overpass Turboリンクを生成
+                const turboUrl = `https://overpass-turbo.eu/?Q=${encodeURIComponent(simpleQuery)}&C=${map.getCenter().lat};${map.getCenter().lng};${map.getZoom()}`;
+                console.log('🔗 Overpass Turboで確認:', turboUrl);
+                
+            } catch (error) {
+                console.error('🧪 テストエラー:', error);
+                showStatus('テスト失敗: ' + error.message, 'error');
+            }
+        }
+
         // テスト地点にジャンプ
         function jumpToTestLocation() {
-            // 渋谷駅周辺（監視カメラが多い地域）
+            // 監視カメラや通信設備が多い地域を選択
             const testLocations = [
-                { name: '渋谷駅', lat: 35.6580, lng: 139.7016, zoom: 17 },
-                { name: '新宿駅', lat: 35.6896, lng: 139.7006, zoom: 17 },
-                { name: '東京駅', lat: 35.6812, lng: 139.7671, zoom: 17 },
-                { name: '秋葉原', lat: 35.7022, lng: 139.7750, zoom: 17 },
-                { name: 'ベルリン（テスト用）', lat: 52.5200, lng: 13.4050, zoom: 15 }
+                { name: 'ロンドン市内（監視カメラ多数）', lat: 51.5074, lng: -0.1278, zoom: 16 },
+                { name: 'ベルリン中央駅', lat: 52.5251, lng: 13.3693, zoom: 17 },
+                { name: 'パリ シャンゼリゼ', lat: 48.8738, lng: 2.2950, zoom: 17 },
+                { name: 'ニューヨーク タイムズスクエア', lat: 40.7580, lng: -73.9855, zoom: 17 },
+                { name: '渋谷スクランブル交差点', lat: 35.6595, lng: 139.7006, zoom: 18 },
+                { name: '新宿駅東口', lat: 35.6896, lng: 139.7006, zoom: 17 }
             ];
             
             const location = testLocations[Math.floor(Math.random() * testLocations.length)];
@@ -585,9 +663,17 @@
             console.log('現在のマーカー数:', markersGroup.getLayers().length);
             console.log('ブラウザ:', navigator.userAgent);
             console.log('HTTPS:', location.protocol === 'https:');
+            
+            // Overpass Turboリンクを生成
+            if (query) {
+                const turboUrl = `https://overpass-turbo.eu/?Q=${encodeURIComponent(query)}&C=${map.getCenter().lat};${map.getCenter().lng};${map.getZoom()}`;
+                console.log('🔗 Overpass Turboで確認:', turboUrl);
+            }
             console.log('===================');
             
-            alert(`デバッグ情報をコンソールに出力しました。\n\n現在地: ${map.getCenter().lat.toFixed(4)}, ${map.getCenter().lng.toFixed(4)}\nズーム: ${map.getZoom()}\nマーカー数: ${markersGroup.getLayers().length}\n\nF12キーでコンソールを確認してください。`);
+            const turboLink = query ? `\n\n🔗 Overpass Turboでテスト:\nhttps://overpass-turbo.eu/?Q=${encodeURIComponent(query)}&C=${map.getCenter().lat};${map.getCenter().lng};${map.getZoom()}` : '';
+            
+            alert(`デバッグ情報をコンソールに出力しました。\n\n現在地: ${map.getCenter().lat.toFixed(4)}, ${map.getCenter().lng.toFixed(4)}\nズーム: ${map.getZoom()}\nマーカー数: ${markersGroup.getLayers().length}\n\nF12キーでコンソールを確認してください。${turboLink}`);
         }
 
         // 位置情報取得（オプション）
