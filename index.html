@@ -97,6 +97,11 @@
             transition: all 0.2s;
         }
 
+        /* ボタン間隔の調整 */
+        .btn-spacing {
+            margin-right: 1.5rem;
+        }
+
         .btn:hover:not(:disabled) {
             transform: translateY(-1px);
         }
@@ -234,6 +239,149 @@
             margin-top: 1rem;
         }
 
+        /* サマリー表示用スタイル */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+
+        .summary-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .summary-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .summary-table tr:hover {
+            background: #e9ecef;
+        }
+
+        .summary-icon {
+            margin-right: 0.5rem;
+        }
+
+        .summary-count {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .summary-total {
+            background: #e3f2fd !important;
+            font-weight: 600;
+            color: #1976d2;
+        }
+
+        .summary-zero {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* サマリーダイアログ専用スタイル */
+        .summary-dialog-content {
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem 1rem 2rem;
+            border-bottom: 1px solid #dee2e6;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .summary-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .summary-close-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        .summary-scroll-content {
+            padding: 1rem 2rem 2rem 2rem;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* スクロールバーのスタイル */
+        .summary-scroll-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .summary-scroll-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .summary-scroll-content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .summary-scroll-content::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 768px) {
+            .summary-dialog-content {
+                max-width: 95vw;
+                max-height: 85vh;
+                margin: 0 1rem;
+            }
+            
+            .summary-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .summary-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .summary-close-btn {
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+            
+            .summary-scroll-content {
+                padding: 1rem;
+            }
+            
+            .summary-table {
+                font-size: 0.8rem;
+            }
+            
+            .summary-table th,
+            .summary-table td {
+                padding: 0.4rem;
+            }
+        }
+
         .footer {
             margin-top: 30px;
             padding: 15px;
@@ -327,6 +475,11 @@
             .buttons {
                 flex-direction: column;
                 align-items: stretch;
+            }
+            
+            /* モバイルでは間隔調整を無効化 */
+            .btn-spacing {
+                margin-right: 0;
             }
             
             #map {
@@ -491,6 +644,7 @@
             <button class="btn btn-success" onclick="selectAll()">全選択</button>
             <button class="btn btn-danger" onclick="selectNone()">全解除</button>
             <button class="btn btn-primary" id="searchBtn" onclick="searchInfrastructure()">🔍 検索</button>
+            <button class="btn btn-info btn-spacing" onclick="showResultSummary()">📊 検索結果サマリー</button>
             <button class="btn btn-info" onclick="showExportDialog()">💾 データ出力</button>
             <button class="btn btn-secondary" onclick="toggleDebugMode()">⚙️ 開発者モード</button>
         </div>
@@ -521,6 +675,19 @@
                 <button class="btn btn-success" onclick="exportToGeoJSON(); closeExportDialog();">📄 GeoJSON形式<br><small>Web用・軽量</small></button>
                 <button class="btn btn-info" onclick="exportToKML(); closeExportDialog();">🌍 KML形式<br><small>Google Earth用</small></button>
                 <button class="btn btn-secondary" onclick="closeExportDialog();">❌ キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 検索結果サマリーダイアログ -->
+    <div class="export-dialog" id="summaryDialog">
+        <div class="export-content summary-dialog-content">
+            <div class="summary-header">
+                <h3>📊 検索結果サマリー</h3>
+                <button class="btn btn-secondary summary-close-btn" onclick="closeSummaryDialog()">❌ 閉じる</button>
+            </div>
+            <div id="summaryContent" class="summary-scroll-content">
+                <p>検索結果がありません</p>
             </div>
         </div>
     </div>
@@ -894,7 +1061,102 @@
             }
         }
 
-        // エクスポート関連
+        // 検索結果サマリー表示
+        function showResultSummary() {
+            if (!window.lastSearchData || !window.lastSearchData.elements || window.lastSearchData.elements.length === 0) {
+                showStatus('表示する検索結果がありません', 'error');
+                return;
+            }
+
+            const elements = window.lastSearchData.elements;
+            const counts = {};
+            const categoryMap = {
+                'surveillance': {category: '🔒 監視・セキュリティ', name: 'CCTVカメラ', icon: '📹'},
+                'police': {category: '🔒 監視・セキュリティ', name: '警察関連施設', icon: '🚓'},
+                'emergency': {category: '🔒 監視・セキュリティ', name: '緊急電話', icon: '🆘'},
+                'tower': {category: '📡 通信・ネットワーク', name: '携帯基地局', icon: '📡'},
+                'wifi': {category: '📡 通信・ネットワーク', name: 'Wi-Fiホットスポット', icon: '📶'},
+                'antenna': {category: '📡 通信・ネットワーク', name: 'アンテナ・マスト', icon: '📻'},
+                'substation': {category: '⚡ 電力・エネルギー', name: '変電所', icon: '⚡'},
+                'power_pole': {category: '⚡ 電力・エネルギー', name: '電柱・鉄塔', icon: '🗼'},
+                'generator': {category: '⚡ 電力・エネルギー', name: '発電機', icon: '🔋'},
+                'traffic_signals': {category: '🚦 交通・輸送', name: '信号機', icon: '🚦'},
+                'speed_camera': {category: '🚦 交通・輸送', name: '交通監視カメラ', icon: '📸'},
+                'fuel_station': {category: '🚦 交通・輸送', name: 'ガソリンスタンド', icon: '⛽'},
+                'atm': {category: '🏢 その他のインフラ', name: 'ATM', icon: '🏧'},
+                'post_box': {category: '🏢 その他のインフラ', name: '郵便ポスト', icon: '📮'},
+                'waste_disposal': {category: '🏢 その他のインフラ', name: 'ゴミ処理施設', icon: '🗑️'},
+                'bank': {category: '🏛️ 施設・サービス', name: '銀行', icon: '🏦'},
+                'hospital': {category: '🏛️ 施設・サービス', name: '病院', icon: '🏥'},
+                'school': {category: '🏛️ 施設・サービス', name: '学校', icon: '🏫'},
+                'restaurant': {category: '🏛️ 施設・サービス', name: 'レストラン', icon: '🍽️'},
+                'shop': {category: '🏛️ 施設・サービス', name: 'ショップ', icon: '🛒'},
+                'parking': {category: '🏛️ 施設・サービス', name: '駐車場', icon: '🅿️'},
+                'other': {category: '❓ その他', name: 'その他', icon: '📍'}
+            };
+
+            // 各オブジェクトタイプをカウント
+            elements.forEach(element => {
+                const markerInfo = getMarkerInfo(element);
+                const infraType = markerInfo.infraType || 'other';
+                counts[infraType] = (counts[infraType] || 0) + 1;
+            });
+
+            // カテゴリ別にグループ化
+            const categorizedCounts = {};
+            Object.keys(categoryMap).forEach(type => {
+                const info = categoryMap[type];
+                if (!categorizedCounts[info.category]) {
+                    categorizedCounts[info.category] = [];
+                }
+                categorizedCounts[info.category].push({
+                    type: type,
+                    name: info.name,
+                    icon: info.icon,
+                    count: counts[type] || 0
+                });
+            });
+
+            // HTMLを生成
+            let summaryHtml = `<div style="text-align: left;">`;
+            let totalCount = 0;
+
+            Object.keys(categorizedCounts).forEach(category => {
+                summaryHtml += `<h4 style="margin: 1rem 0 0.5rem 0; color: #495057; border-bottom: 1px solid #dee2e6; padding-bottom: 0.2rem;">${category}</h4>`;
+                summaryHtml += `<table class="summary-table">`;
+                
+                categorizedCounts[category].forEach(item => {
+                    const countClass = item.count === 0 ? 'summary-zero' : 'summary-count';
+                    summaryHtml += `<tr>
+                        <td><span class="summary-icon">${item.icon}</span>${item.name}</td>
+                        <td class="${countClass}">${item.count}件</td>
+                    </tr>`;
+                    totalCount += item.count;
+                });
+                
+                summaryHtml += `</table>`;
+            });
+
+            summaryHtml += `<table class="summary-table" style="margin-top: 1rem;">
+                <tr class="summary-total">
+                    <td><strong>🔢 合計</strong></td>
+                    <td><strong>${totalCount}件</strong></td>
+                </tr>
+            </table>`;
+
+            summaryHtml += `<p style="margin-top: 1rem; font-size: 0.85rem; color: #6c757d;">
+                検索範囲: ${map.getZoom()}レベル、中心座標: ${map.getCenter().lat.toFixed(4)}, ${map.getCenter().lng.toFixed(4)}
+            </p>`;
+
+            summaryHtml += `</div>`;
+
+            document.getElementById('summaryContent').innerHTML = summaryHtml;
+            document.getElementById('summaryDialog').style.display = 'flex';
+        }
+
+        function closeSummaryDialog() {
+            document.getElementById('summaryDialog').style.display = 'none';
+        }
         function showExportDialog() {
             const totalMarkers = markersGroup.getLayers().length;
             if (totalMarkers === 0) {
