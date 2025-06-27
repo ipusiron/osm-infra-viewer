@@ -54,14 +54,6 @@
             align-items: center;
         }
 
-        .controls-main {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-            width: 100%;
-        }
-
         .control-group {
             display: flex;
             align-items: center;
@@ -247,6 +239,7 @@
         }
 
         #debug-controls {
+            margin-top: 1rem;
             padding: 1rem;
             border: 2px dashed #95a5a6;
             border-radius: 6px;
@@ -283,17 +276,12 @@
                 padding: 0.8rem;
             }
             
-            .controls-main {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.8rem;
-            }
-            
             .checkbox-group {
                 gap: 0.5rem;
             }
             
             #debug-controls {
+                margin-top: 0.8rem;
                 padding: 0.8rem;
                 gap: 0.5rem;
             }
@@ -337,6 +325,7 @@
             </div>
         </div>
         <button class="search-btn" onclick="searchInfrastructure()">🔍 検索</button>
+        <button class="search-btn" onclick="showClusterInfo()" style="background: #8e44ad;">📊 クラスタ情報</button>
         <button class="search-btn dev-mode-btn" onclick="toggleDebugMode()" style="background: #6c757d;">⚙️ 開発者モード</button>
         
         <!-- デバッグモード時のみ表示 -->
@@ -928,7 +917,6 @@ out center meta;`;
                     <button class="search-btn" onclick="showDebugInfo()" style="background: #95a5a6;">🔧 デバッグ情報</button>
                     <button class="search-btn" onclick="jumpToTestLocation()" style="background: #e67e22;">📍 テスト地点</button>
                     <button class="search-btn" onclick="testSimpleQuery()" style="background: #27ae60;">🧪 簡単テスト</button>
-                    <button class="search-btn" onclick="showClusterInfo()" style="background: #8e44ad;">📊 クラスタ情報</button>
                 `;
                 toggleButton.textContent = '⚙️ 開発者モード ON';
                 toggleButton.style.background = '#28a745';
