@@ -308,6 +308,10 @@
             color: #28a745;
         }
 
+        .zoom-warning {
+            color: #fd7e14;
+        }
+
         .zoom-ng {
             color: #dc3545;
         }
@@ -833,7 +837,7 @@
         <div id="map">
             <div class="zoom-indicator" id="zoomIndicator">
                 <div>ズーム: <span id="zoomLevel">14.0</span></div>
-                <div class="zoom-status" id="zoomStatus">検索可能</div>
+                <div class="zoom-status" id="zoomStatus">詳細範囲</div>
             </div>
         </div>
     </div>
@@ -985,29 +989,29 @@
             });
         }
 
-        // ズームレベル表示更新（範囲制限を緩和）
+        // ズームレベル表示更新（制限撤廃、情報表示）
         function updateZoomIndicator() {
             const currentZoom = map.getZoom();
             const bounds = map.getBounds();
             const latDiff = bounds.getNorth() - bounds.getSouth();
             const lngDiff = bounds.getEast() - bounds.getWest();
-            const maxRange = 0.05; // 約5km四方に緩和
-            
-            const zoomOK = currentZoom >= 11;
-            const rangeOK = latDiff <= maxRange && lngDiff <= maxRange;
-            const canSearch = zoomOK && rangeOK;
             
             document.getElementById('zoomLevel').textContent = currentZoom.toFixed(1);
             
             const statusElement = document.getElementById('zoomStatus');
-            if (canSearch) {
-                statusElement.textContent = '検索可能';
+            
+            // 検索範囲の広さに応じたメッセージ表示
+            if (currentZoom >= 13) {
+                statusElement.textContent = '詳細範囲';
                 statusElement.className = 'zoom-status zoom-ok';
-            } else if (!zoomOK) {
-                statusElement.textContent = 'ズーム不足';
-                statusElement.className = 'zoom-status zoom-ng';
-            } else if (!rangeOK) {
-                statusElement.textContent = '範囲が広い';
+            } else if (currentZoom >= 10) {
+                statusElement.textContent = '中範囲';
+                statusElement.className = 'zoom-status zoom-ok';
+            } else if (currentZoom >= 7) {
+                statusElement.textContent = '広範囲（時間要注意）';
+                statusElement.className = 'zoom-status zoom-warning';
+            } else {
+                statusElement.textContent = '超広範囲（時間かかる）';
                 statusElement.className = 'zoom-status zoom-ng';
             }
         }
@@ -1309,29 +1313,11 @@
             showStatus(`${count}個のオブジェクトを表示しました`, 'success');
         }
 
-        // インフラ検索（範囲制限を緩和）
+        // インフラ検索（制限撤廃版）
         async function searchInfrastructure() {
             if (isSearching) return;
 
-            // ズームレベル制限チェック（11以上）
-            const currentZoom = map.getZoom();
-            if (currentZoom < 11) {
-                showStatus('⚠️ ズームレベル11以上でないと検索できません（現在: ' + currentZoom.toFixed(1) + '）', 'error');
-                return;
-            }
-
             const bounds = map.getBounds();
-            
-            // 検索範囲制限チェック（0.05度に緩和 = 約5km四方）
-            const latDiff = bounds.getNorth() - bounds.getSouth();
-            const lngDiff = bounds.getEast() - bounds.getWest();
-            const maxRange = 0.05; // 約5km四方に緩和
-            
-            if (latDiff > maxRange || lngDiff > maxRange) {
-                showStatus('⚠️ 検索範囲が広すぎます。もう少しズームインしてください', 'error');
-                return;
-            }
-
             const query = buildOverpassQuery(bounds);
             
             if (!query) {
@@ -1339,8 +1325,18 @@
                 return;
             }
 
+            // 広範囲検索の警告
+            const currentZoom = map.getZoom();
+            const latDiff = bounds.getNorth() - bounds.getSouth();
+            const lngDiff = bounds.getEast() - bounds.getWest();
+            
+            if (currentZoom < 10 || latDiff > 0.1 || lngDiff > 0.1) {
+                showStatus('🔍 広範囲を検索中です。時間がかかる場合があります...', 'loading');
+            } else {
+                showStatus('🔍 データを取得中...', 'loading');
+            }
+
             setSearchButtonLoading(true);
-            showStatus('🔍 データを取得中... (最適化モード)', 'loading');
 
             try {
                 const response = await fetch('https://overpass-api.de/api/interpreter', {
@@ -1358,7 +1354,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 if (error.message.includes('timeout')) {
-                    showStatus('⏱️ 検索がタイムアウトしました。さらにズームインして範囲を狭めてください', 'error');
+                    showStatus('⏱️ 検索がタイムアウトしました。範囲を狭めるか、オブジェクト数を減らしてください', 'error');
                 } else {
                     showStatus('データ取得に失敗しました: ' + error.message, 'error');
                 }
@@ -1604,7 +1600,17 @@
             const bounds = map.getBounds();
             const latDiff = bounds.getNorth() - bounds.getSouth();
             const lngDiff = bounds.getEast() - bounds.getWest();
-            const isSearchable = currentZoom >= 11 && latDiff <= 0.05 && lngDiff <= 0.05;
+            
+            let searchType = '';
+            if (currentZoom >= 13) {
+                searchType = '詳細検索';
+            } else if (currentZoom >= 10) {
+                searchType = '中範囲検索';
+            } else if (currentZoom >= 7) {
+                searchType = '広範囲検索（時間要注意）';
+            } else {
+                searchType = '超広範囲検索（時間かかる）';
+            }
             
             console.log('Debug Info:', {
                 bounds: bounds,
@@ -1612,15 +1618,14 @@
                 center: map.getCenter(),
                 markers: markersGroup.getLayers().length,
                 isSearching: isSearching,
-                searchableArea: {
-                    zoomOK: currentZoom >= 11,
-                    rangeOK: latDiff <= 0.05 && lngDiff <= 0.05,
+                searchArea: {
                     latDiff: latDiff.toFixed(6),
                     lngDiff: lngDiff.toFixed(6),
-                    canSearch: isSearchable
+                    searchType: searchType,
+                    restrictionsRemoved: true
                 }
             });
-            alert(`デバッグ情報をコンソールに出力しました\n\nズーム: ${currentZoom.toFixed(1)} ${currentZoom >= 11 ? '✅' : '❌'}\n範囲: ${latDiff.toFixed(6)} x ${lngDiff.toFixed(6)} ${(latDiff <= 0.05 && lngDiff <= 0.05) ? '✅' : '❌'}\n検索可能: ${isSearchable ? '✅' : '❌'}`);
+            alert(`デバッグ情報をコンソールに出力しました\n\nズーム: ${currentZoom.toFixed(1)}\n範囲: ${latDiff.toFixed(6)} x ${lngDiff.toFixed(6)}\n検索タイプ: ${searchType}\n制限: 撤廃済み`);
         }
 
         function jumpToTestLocation() {
@@ -1636,7 +1641,7 @@
         window.addEventListener('load', () => {
             setupLocationSearch(); // 場所検索機能のセットアップ
             updateZoomIndicator(); // 初期表示を更新
-            showStatus('🗺️ 検索可能な状態です。オブジェクトを選択して検索ボタンをクリックしてください', 'success');
+            showStatus('🗺️ 制限なしで検索可能です。広範囲検索は時間がかかる場合があります', 'success');
         });
     </script>
 </body>
