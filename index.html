@@ -200,54 +200,9 @@
             border-left: 4px solid #f44336;
         }
 
-        /* ローディングスピナー */
-        .loading-spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #e3f2fd;
-            border-top: 2px solid #1976d2;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        /* ローディングオーバーレイ */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .loading-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .loading-content .large-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e3f2fd;
-            border-top: 4px solid #1976d2;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
         }
 
         .export-dialog {
@@ -378,7 +333,6 @@
                 height: 500px;
             }
             
-            /* モバイル用ポップアップ調整 */
             .leaflet-popup-content {
                 max-width: 280px !important;
                 min-width: 250px !important;
@@ -554,16 +508,6 @@
 
     <div class="status" id="status"></div>
 
-    <!-- ローディングオーバーレイ -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-content">
-            <div class="large-spinner"></div>
-            <h3>🔍 データを検索中...</h3>
-            <p id="loadingMessage">OpenStreetMapからインフラデータを取得しています</p>
-            <small>しばらくお待ちください</small>
-        </div>
-    </div>
-
     <div class="map-container">
         <div id="map"></div>
     </div>
@@ -736,39 +680,55 @@
                 parking: {color: '#607d8b', icon: '🅿️', type: '駐車場'}
             };
 
-            // タグから種類を判定
-            for (const [type, info] of Object.entries(typeMap)) {
-                if ((tags.man_made === 'surveillance' && type === 'surveillance') ||
-                    (tags.amenity === 'police' && type === 'police') ||
-                    (tags.emergency === 'phone' && type === 'emergency') ||
-                    (tags.man_made === 'communications_tower' && type === 'tower') ||
-                    (tags.internet_access === 'wlan' && type === 'wifi') ||
-                    (tags.amenity === 'bank' && type === 'bank') ||
-                    (tags.amenity === 'hospital' && type === 'hospital') ||
-                    (tags.amenity === 'school' && type === 'school') ||
-                    (tags.amenity === 'restaurant' && type === 'restaurant') ||
-                    (tags.amenity === 'atm' && type === 'atm') ||
-                    (tags.amenity === 'parking' && type === 'parking')) {
-                    return {...info, infraType: type};
-                }
-            }
+            // タグから種類を判定（すべてのパターンをチェック）
+            // 監視・セキュリティ
+            if (tags.man_made === 'surveillance') return {...typeMap.surveillance, infraType: 'surveillance'};
+            if (tags.amenity === 'police') return {...typeMap.police, infraType: 'police'};
+            if (tags.emergency === 'phone') return {...typeMap.emergency, infraType: 'emergency'};
+            
+            // 通信・ネットワーク
+            if (tags.man_made === 'communications_tower' || tags.man_made === 'tower') return {...typeMap.tower, infraType: 'tower'};
+            if (tags.internet_access === 'wlan') return {...typeMap.wifi, infraType: 'wifi'};
+            if (tags.man_made === 'mast' || tags.man_made === 'antenna') return {...typeMap.antenna, infraType: 'antenna'};
+            
+            // 電力・エネルギー
+            if (tags.power === 'substation') return {...typeMap.substation, infraType: 'substation'};
+            if (tags.power === 'pole' || tags.power === 'tower') return {...typeMap.power_pole, infraType: 'power_pole'};
+            if (tags.power === 'generator') return {...typeMap.generator, infraType: 'generator'};
+            
+            // 交通・輸送
+            if (tags.highway === 'traffic_signals') return {...typeMap.traffic_signals, infraType: 'traffic_signals'};
+            if (tags.highway === 'speed_camera') return {...typeMap.speed_camera, infraType: 'speed_camera'};
+            if (tags.amenity === 'fuel') return {...typeMap.fuel_station, infraType: 'fuel_station'};
+            
+            // その他のインフラ
+            if (tags.amenity === 'atm') return {...typeMap.atm, infraType: 'atm'};
+            if (tags.amenity === 'post_box') return {...typeMap.post_box, infraType: 'post_box'};
+            if (tags.amenity === 'waste_disposal') return {...typeMap.waste_disposal, infraType: 'waste_disposal'};
+            
+            // 施設・サービス
+            if (tags.amenity === 'bank') return {...typeMap.bank, infraType: 'bank'};
+            if (tags.amenity === 'hospital') return {...typeMap.hospital, infraType: 'hospital'};
+            if (tags.amenity === 'school') return {...typeMap.school, infraType: 'school'};
+            if (tags.amenity === 'restaurant') return {...typeMap.restaurant, infraType: 'restaurant'};
+            if (tags.shop === 'supermarket' || tags.shop === 'convenience') return {...typeMap.shop, infraType: 'shop'};
+            if (tags.amenity === 'parking') return {...typeMap.parking, infraType: 'parking'};
 
+            // デフォルト（その他）
             return {color: '#95a5a6', icon: '📍', type: 'その他', infraType: 'other'};
         }
 
-        // 詳細なポップアップ内容を生成
-        function generateDetailedPopup(element, markerInfo) {
+        // ポップアップ内容を生成（住所表示対応）
+        function generatePopup(element, markerInfo) {
             const tags = element.tags || {};
             const lat = element.lat || (element.center ? element.center.lat : 0);
             const lon = element.lon || (element.center ? element.center.lon : 0);
             
             let content = `<div class="popup-header">${markerInfo.icon} ${markerInfo.type}</div>`;
             
-            // 基本情報セクション
-            const hasBasicInfo = tags.name || tags.operator || tags.brand || tags.description;
-            if (hasBasicInfo) {
+            // 基本情報
+            if (tags.name || tags.operator || tags.brand) {
                 content += `<div class="popup-section"><h4>📋 基本情報</h4>`;
-                
                 if (tags.name) {
                     content += `<div class="popup-item">
                         <span class="popup-label">名称:</span>
@@ -787,65 +747,52 @@
                         <span class="popup-value">${escapeHtml(tags.brand)}</span>
                     </div>`;
                 }
-                if (tags.description) {
-                    content += `<div class="popup-item">
-                        <span class="popup-label">説明:</span>
-                        <span class="popup-value">${escapeHtml(tags.description)}</span>
-                    </div>`;
-                }
                 content += `</div>`;
             }
 
-            // 住所情報セクション
-            const addressFields = [
-                'addr:country', 'addr:state', 'addr:city', 'addr:suburb', 
-                'addr:district', 'addr:street', 'addr:housenumber', 'addr:postcode'
-            ];
-            const hasAddressInfo = tags.address || addressFields.some(field => tags[field]);
+            // 住所・位置情報
+            const hasAddress = tags.address || tags['addr:city'] || tags['addr:street'] || tags['addr:postcode'];
+            content += `<div class="popup-section"><h4>📍 ${hasAddress ? '住所・位置情報' : '位置情報'}</h4>`;
             
-            if (hasAddressInfo) {
-                content += `<div class="popup-section"><h4>📍 住所情報</h4>`;
+            // 住所情報の表示
+            if (tags.address) {
+                content += `<div class="popup-item">
+                    <span class="popup-label">住所:</span>
+                    <span class="popup-value">${escapeHtml(tags.address)}</span>
+                </div>`;
+            } else if (tags['addr:city'] || tags['addr:street']) {
+                // 住所を組み立て
+                let addressParts = [];
+                if (tags['addr:state']) addressParts.push(tags['addr:state']);
+                if (tags['addr:city']) addressParts.push(tags['addr:city']);
+                if (tags['addr:suburb']) addressParts.push(tags['addr:suburb']);
+                if (tags['addr:street']) addressParts.push(tags['addr:street']);
+                if (tags['addr:housenumber']) addressParts.push(tags['addr:housenumber']);
                 
-                if (tags.address) {
+                if (addressParts.length > 0) {
                     content += `<div class="popup-item">
                         <span class="popup-label">住所:</span>
-                        <span class="popup-value">${escapeHtml(tags.address)}</span>
-                    </div>`;
-                } else {
-                    // 住所を構成要素から組み立て
-                    const addressParts = [];
-                    if (tags['addr:country']) addressParts.push(tags['addr:country']);
-                    if (tags['addr:state']) addressParts.push(tags['addr:state']);
-                    if (tags['addr:city']) addressParts.push(tags['addr:city']);
-                    if (tags['addr:suburb']) addressParts.push(tags['addr:suburb']);
-                    if (tags['addr:district']) addressParts.push(tags['addr:district']);
-                    if (tags['addr:street']) addressParts.push(tags['addr:street']);
-                    if (tags['addr:housenumber']) addressParts.push(tags['addr:housenumber']);
-                    
-                    if (addressParts.length > 0) {
-                        content += `<div class="popup-item">
-                            <span class="popup-label">住所:</span>
-                            <span class="popup-value">${addressParts.join(', ')}</span>
-                        </div>`;
-                    }
-                }
-                
-                if (tags['addr:postcode']) {
-                    content += `<div class="popup-item">
-                        <span class="popup-label">郵便番号:</span>
-                        <span class="popup-value">${escapeHtml(tags['addr:postcode'])}</span>
+                        <span class="popup-value">${addressParts.join('')}</span>
                     </div>`;
                 }
-                content += `</div>`;
             }
+            
+            if (tags['addr:postcode']) {
+                content += `<div class="popup-item">
+                    <span class="popup-label">郵便番号:</span>
+                    <span class="popup-value">〒${escapeHtml(tags['addr:postcode'])}</span>
+                </div>`;
+            }
+
+            content += `<div class="popup-item">
+                <span class="popup-label">座標:</span>
+                <span class="popup-value popup-coordinates">${lat.toFixed(6)}, ${lon.toFixed(6)}</span>
+            </div>`;
+            content += `</div>`;
 
             // システム情報
             content += `<div class="popup-section">
                 <h4>🗺️ システム情報</h4>
-                <div class="popup-item">
-                    <span class="popup-label">座標:</span>
-                    <span class="popup-value popup-coordinates">${lat.toFixed(6)}, ${lon.toFixed(6)}</span>
-                </div>
                 <div class="popup-item">
                     <span class="popup-label">OSM ID:</span>
                     <span class="popup-value">${element.type}/${element.id}</span>
@@ -901,8 +848,8 @@
                     fillOpacity: 0.8
                 });
 
-                // 詳細ポップアップを使用
-                const popupContent = generateDetailedPopup(element, markerInfo);
+                // ポップアップ
+                const popupContent = generatePopup(element, markerInfo);
                 marker.bindPopup(popupContent);
                 markersGroup.addLayer(marker);
                 count++;
@@ -913,10 +860,7 @@
 
         // インフラ検索
         async function searchInfrastructure() {
-            // 重複実行を防ぐ
-            if (isSearching) {
-                return;
-            }
+            if (isSearching) return;
 
             const bounds = map.getBounds();
             const query = buildOverpassQuery(bounds);
@@ -926,7 +870,6 @@
                 return;
             }
 
-            // 検索開始時の状態設定
             setSearchButtonLoading(true);
             showStatus('データを取得中...', 'loading');
 
@@ -940,17 +883,13 @@
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
                 const data = await response.json();
-                
-                // データを保存（エクスポート用）
                 window.lastSearchData = data;
-                
                 addMarkersToMap(data);
                 
             } catch (error) {
                 console.error('Error:', error);
                 showStatus('データ取得に失敗しました: ' + error.message, 'error');
             } finally {
-                // 検索完了時の状態復元
                 setSearchButtonLoading(false);
             }
         }
@@ -973,7 +912,6 @@
         function exportToGeoJSON() {
             const features = [];
             
-            // データから直接取得（より詳細な情報を含む）
             if (window.lastSearchData && window.lastSearchData.elements) {
                 window.lastSearchData.elements.forEach(element => {
                     if (element.lat && element.lon || element.center) {
@@ -991,36 +929,9 @@
                                 name: tags.name || '',
                                 operator: tags.operator || '',
                                 address: tags.address || '',
-                                'addr:street': tags['addr:street'] || '',
-                                'addr:city': tags['addr:city'] || '',
-                                'addr:postcode': tags['addr:postcode'] || '',
-                                fee: tags.fee || '',
-                                'internet_access:fee': tags['internet_access:fee'] || '',
-                                opening_hours: tags.opening_hours || '',
-                                phone: tags.phone || '',
-                                website: tags.website || '',
-                                height: tags.height || '',
-                                'surveillance:type': tags['surveillance:type'] || '',
                                 osmId: `${element.type}/${element.id}`,
                                 exportedAt: new Date().toISOString(),
                                 source: "OpenStreetMap"
-                            }
-                        });
-                    }
-                });
-            } else {
-                // フォールバック: マーカーから取得
-                markersGroup.eachLayer(layer => {
-                    if (layer.getLatLng) {
-                        const latlng = layer.getLatLng();
-                        features.push({
-                            type: "Feature",
-                            geometry: {
-                                type: "Point",
-                                coordinates: [latlng.lng, latlng.lat]
-                            },
-                            properties: {
-                                exportedAt: new Date().toISOString()
                             }
                         });
                     }
