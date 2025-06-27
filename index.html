@@ -326,6 +326,7 @@
         </div>
         <button class="search-btn" onclick="searchInfrastructure()">🔍 検索</button>
         <button class="search-btn" onclick="showClusterInfo()" style="background: #8e44ad;">📊 クラスタ情報</button>
+        <button class="search-btn" onclick="showExportOptions()" style="background: #17a2b8;">💾 データ出力</button>
         <button class="search-btn dev-mode-btn" onclick="toggleDebugMode()" style="background: #6c757d;">⚙️ 開発者モード</button>
         
         <!-- デバッグモード時のみ表示 -->
@@ -360,10 +361,17 @@
         <div style="font-size: 0.85rem; color: #666;">
             <strong>📊 クラスタリング機能</strong><br>
             密集エリアでは自動的にグループ化されます。クラスタをクリックするとズームして詳細表示。<br>
+            「📊 クラスタ情報」ボタンで統計情報を確認できます。<br>
             <span style="color: #e74c3c;">●</span> 監視カメラ主体
             <span style="color: #3498db;">●</span> 基地局主体
             <span style="color: #f39c12;">●</span> Wi-Fi主体
             <span style="color: #95a5a6;">●</span> 混在
+        </div>
+        <hr style="margin: 10px 0; border-color: #eee;">
+        <div style="font-size: 0.85rem; color: #666;">
+            <strong>💾 データ出力機能</strong><br>
+            取得したデータをGeoJSON/KML形式で出力可能。QGIS、Google Earth、ArcGIS等で利用できます。<br>
+            <strong>GeoJSON:</strong> Web用、軽量、プログラミング向け｜<strong>KML:</strong> Google Earth用、視覚的
         </div>
     </div>
 
@@ -799,6 +807,215 @@ out center meta;`;
             }
         }
 
+        // エクスポート機能
+        function showExportOptions() {
+            const totalMarkers = markersGroup.getLayers().length;
+            
+            if (totalMarkers === 0) {
+                showStatus('エクスポートするデータがありません。まず検索を実行してください。', 'error');
+                return;
+            }
+
+            const choice = confirm(`現在${totalMarkers}個のオブジェクトがあります。\n\nOK = GeoJSON形式で出力\nキャンセル = KML形式で出力\n\nどちらの形式で出力しますか？`);
+            
+            if (choice) {
+                exportToGeoJSON();
+            } else {
+                exportToKML();
+            }
+        }
+
+        // GeoJSON形式でエクスポート
+        function exportToGeoJSON() {
+            console.log('📄 GeoJSONエクスポート開始');
+            
+            const features = [];
+            
+            markersGroup.eachLayer(function(layer) {
+                if (layer.getLatLng && layer.options && layer.options.infraType) {
+                    const latlng = layer.getLatLng();
+                    const popupContent = layer.getPopup()?.getContent() || '';
+                    
+                    // ポップアップからタグ情報を抽出（簡易版）
+                    const infraType = layer.options.infraType;
+                    let name = 'Unknown';
+                    let operator = '';
+                    
+                    // ポップアップ内容から名前と運営者を抽出
+                    const nameMatch = popupContent.match(/<strong>name:<\/strong>\s*([^<]+)/);
+                    const operatorMatch = popupContent.match(/<strong>operator:<\/strong>\s*([^<]+)/);
+                    
+                    if (nameMatch) name = nameMatch[1].trim();
+                    if (operatorMatch) operator = operatorMatch[1].trim();
+
+                    const feature = {
+                        type: "Feature",
+                        geometry: {
+                            type: "Point",
+                            coordinates: [latlng.lng, latlng.lat]
+                        },
+                        properties: {
+                            name: name,
+                            infraType: infraType,
+                            operator: operator,
+                            exportedAt: new Date().toISOString(),
+                            source: "OpenStreetMap via OSM Infrastructure Viewer"
+                        }
+                    };
+                    
+                    features.push(feature);
+                }
+            });
+
+            const geoJSON = {
+                type: "FeatureCollection",
+                metadata: {
+                    title: "OSM Infrastructure Data",
+                    description: "Infrastructure objects from OpenStreetMap",
+                    generator: "OSM Infrastructure Viewer by IPUSIRON",
+                    exportedAt: new Date().toISOString(),
+                    count: features.length
+                },
+                features: features
+            };
+
+            const jsonString = JSON.stringify(geoJSON, null, 2);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const filename = `osm-infrastructure-${timestamp}.geojson`;
+            
+            downloadFile(jsonString, filename, 'application/geo+json');
+            showStatus(`GeoJSON形式で${features.length}個のオブジェクトを出力しました`, 'success');
+            
+            console.log('✅ GeoJSONエクスポート完了:', features.length, 'features');
+        }
+
+        // KML形式でエクスポート
+        function exportToKML() {
+            console.log('📄 KMLエクスポート開始');
+            
+            let kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>OSM Infrastructure Data</name>
+    <description>Infrastructure objects from OpenStreetMap exported by OSM Infrastructure Viewer</description>
+    
+    <!-- Styles for different infrastructure types -->
+    <Style id="surveillance">
+      <IconStyle>
+        <color>ff3c4ce7</color>
+        <scale>1.0</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/surveillance.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="tower">
+      <IconStyle>
+        <color>ffdb5234</color>
+        <scale>1.0</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/phone.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="wifi">
+      <IconStyle>
+        <color>ff12f39c</color>
+        <scale>1.0</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/wifi.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    
+    <!-- Infrastructure Objects -->
+`;
+
+            let count = 0;
+            markersGroup.eachLayer(function(layer) {
+                if (layer.getLatLng && layer.options && layer.options.infraType) {
+                    const latlng = layer.getLatLng();
+                    const popupContent = layer.getPopup()?.getContent() || '';
+                    const infraType = layer.options.infraType;
+                    
+                    // ポップアップからタグ情報を抽出
+                    let name = `Infrastructure Object ${count + 1}`;
+                    let operator = '';
+                    let description = popupContent.replace(/<[^>]*>/g, ''); // HTMLタグを除去
+                    
+                    const nameMatch = popupContent.match(/<strong>name:<\/strong>\s*([^<]+)/);
+                    const operatorMatch = popupContent.match(/<strong>operator:<\/strong>\s*([^<]+)/);
+                    
+                    if (nameMatch) name = nameMatch[1].trim();
+                    if (operatorMatch) operator = operatorMatch[1].trim();
+
+                    const infraTypeNames = {
+                        surveillance: 'CCTV Camera',
+                        tower: 'Communication Tower',
+                        wifi: 'Wi-Fi Hotspot',
+                        other: 'Other Infrastructure'
+                    };
+
+                    kmlContent += `    <Placemark>
+      <name>${escapeXml(name)}</name>
+      <description><![CDATA[
+        <b>Type:</b> ${infraTypeNames[infraType] || infraType}<br/>
+        <b>Operator:</b> ${escapeXml(operator)}<br/>
+        <b>Coordinates:</b> ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}<br/>
+        <b>Source:</b> OpenStreetMap<br/>
+        <hr/>
+        ${description}
+      ]]></description>
+      <styleUrl>#${infraType}</styleUrl>
+      <Point>
+        <coordinates>${latlng.lng},${latlng.lat},0</coordinates>
+      </Point>
+    </Placemark>
+`;
+                    count++;
+                }
+            });
+
+            kmlContent += `  </Document>
+</kml>`;
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const filename = `osm-infrastructure-${timestamp}.kml`;
+            
+            downloadFile(kmlContent, filename, 'application/vnd.google-earth.kml+xml');
+            showStatus(`KML形式で${count}個のオブジェクトを出力しました`, 'success');
+            
+            console.log('✅ KMLエクスポート完了:', count, 'placemarks');
+        }
+
+        // XML用エスケープ
+        function escapeXml(unsafe) {
+            return unsafe.replace(/[<>&'"]/g, function (c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+        }
+
+        // ファイルダウンロード
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log(`📁 ファイルダウンロード: ${filename} (${(blob.size / 1024).toFixed(1)} KB)`);
+        }
+
         // クラスタ情報表示（開発者モード）
         function showClusterInfo() {
             const totalMarkers = markersGroup.getLayers().length;
@@ -873,6 +1090,7 @@ out center meta;`;
         function showDebugInfo() {
             const bounds = map.getBounds();
             const query = buildOverpassQuery(bounds);
+            const totalMarkers = markersGroup.getLayers().length;
             
             console.log('=== 🔧 デバッグ情報 ===');
             console.log('現在位置:', map.getCenter());
@@ -885,8 +1103,9 @@ out center meta;`;
                 tower: document.getElementById('tower').checked,
                 wifi: document.getElementById('wifi').checked
             });
+            console.log('総マーカー数:', totalMarkers);
+            console.log('エクスポート可能:', totalMarkers > 0 ? 'Yes' : 'No');
             console.log('Overpassクエリ:', query);
-            console.log('現在のマーカー数:', markersGroup.getLayers().length);
             console.log('ブラウザ:', navigator.userAgent);
             console.log('HTTPS:', location.protocol === 'https:');
             
@@ -899,7 +1118,7 @@ out center meta;`;
             
             const turboLink = query ? `\n\n🔗 Overpass Turboでテスト:\nhttps://overpass-turbo.eu/?Q=${encodeURIComponent(query)}&C=${map.getCenter().lat};${map.getCenter().lng};${map.getZoom()}` : '';
             
-            alert(`デバッグ情報をコンソールに出力しました。\n\n現在地: ${map.getCenter().lat.toFixed(4)}, ${map.getCenter().lng.toFixed(4)}\nズーム: ${map.getZoom()}\nマーカー数: ${markersGroup.getLayers().length}\n\nF12キーでコンソールを確認してください。${turboLink}`);
+            alert(`デバッグ情報をコンソールに出力しました。\n\n現在地: ${map.getCenter().lat.toFixed(4)}, ${map.getCenter().lng.toFixed(4)}\nズーム: ${map.getZoom()}\nマーカー数: ${totalMarkers}\nエクスポート: ${totalMarkers > 0 ? '可能' : '不可'}\n\nF12キーでコンソールを確認してください。${turboLink}`);
         }
 
         // デバッグモードの状態管理
@@ -950,7 +1169,6 @@ out center meta;`;
                     <button class="search-btn" onclick="showDebugInfo()" style="background: #95a5a6;">🔧 デバッグ情報</button>
                     <button class="search-btn" onclick="jumpToTestLocation()" style="background: #e67e22;">📍 テスト地点</button>
                     <button class="search-btn" onclick="testSimpleQuery()" style="background: #27ae60;">🧪 簡単テスト</button>
-                    <button class="search-btn" onclick="showClusterInfo()" style="background: #8e44ad;">📊 クラスタ情報</button>
                 `;
                 toggleButton.textContent = '⚙️ 開発者モード ON';
                 toggleButton.style.background = '#28a745';
