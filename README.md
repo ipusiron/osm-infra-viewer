@@ -23,13 +23,7 @@
 
 ## 🌐 デモページ
 
-### 通常使用
-
 👉 [https://ipusiron.github.io/osm-infra-viewer/](https://ipusiron.github.io/osm-infra-viewer/)
-
-### デバッグモード
-
-👉 [https://ipusiron.github.io/osm-infra-viewer/?debug=true](https://ipusiron.github.io/osm-infra-viewer/?debug=true)
 
 ### 主な特徴
 
