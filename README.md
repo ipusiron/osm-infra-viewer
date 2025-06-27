@@ -23,7 +23,13 @@
 
 ## 🌐 デモページ
 
+### 通常使用
+
 👉 [https://ipusiron.github.io/osm-infra-viewer/](https://ipusiron.github.io/osm-infra-viewer/)
+
+### デバッグモード
+
+👉 [https://ipusiron.github.io/osm-infra-viewer/?debug=true](https://ipusiron.github.io/osm-infra-viewer/?debug=true)
 
 ### 主な特徴
 
@@ -40,6 +46,8 @@
 3. 画面のUIから「表示したいオブジェクト種別」を選択します。
 4. 「検索」ボタンをクリックすると、Overpass APIが現在の地図範囲に対してデータを取得し、マーカーを表示されます。
 5. マーカーをクリックすると、詳細な属性（例：name, operator, surveillance:type など）が表示されます。
+
+なお、URLに"?debug=true"をつけると、デバッグモードになります。
 
 ## 🔧 技術スタック
 | 技術         | 用途                            |
