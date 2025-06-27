@@ -1,0 +1,670 @@
+/* OSMインフラ可視化ツール - スタイルシート */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f5f5;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.controls {
+    background: white;
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* 場所検索機能のスタイル */
+.location-search {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.location-search h3 {
+    margin: 0 0 0.8rem 0;
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.location-input {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.location-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.search-btn {
+    padding: 0.6rem 1rem;
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+.search-examples {
+    color: #6c757d;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.object-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.category {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 0.8rem;
+    background: #f9f9f9;
+}
+
+.category-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.2rem;
+}
+
+.checkbox-item input {
+    width: 16px;
+    height: 16px;
+}
+
+.checkbox-item label {
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn {
+    padding: 0.7rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+/* ボタン無効化時のスタイル */
+.btn:disabled {
+    background: #95a5a6 !important;
+    color: #ffffff !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
+}
+
+/* 検索ボタンのローディング状態 */
+.btn.loading {
+    position: relative;
+    background: #95a5a6 !important;
+    cursor: not-allowed;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ボタン間隔の調整 */
+.btn-spacing {
+    margin-right: 1.5rem;
+}
+
+/* ツールチップスタイル */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 0.8rem;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+.map-container {
+    margin: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+#map {
+    height: 600px;
+    width: 100%;
+    position: relative;
+}
+
+/* ズームレベル表示 */
+.zoom-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1000;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    border: 1px solid #ddd;
+    min-width: 120px;
+    text-align: center;
+}
+
+.zoom-status {
+    font-size: 0.75rem;
+    margin-top: 2px;
+    font-weight: normal;
+}
+
+.zoom-ok {
+    color: #28a745;
+}
+
+.zoom-warning {
+    color: #fd7e14;
+}
+
+.zoom-ng {
+    color: #dc3545;
+}
+
+.status {
+    margin: 1rem;
+    padding: 0.8rem;
+    border-radius: 6px;
+    font-weight: 500;
+    display: none;
+    position: relative;
+}
+
+.status.loading {
+    background: #e3f2fd;
+    color: #1976d2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-left: 4px solid #2196f3;
+}
+
+.status.success {
+    background: #e8f5e8;
+    color: #2e7d32;
+    display: block;
+    border-left: 4px solid #4caf50;
+}
+
+.status.error {
+    background: #ffebee;
+    color: #c62828;
+    display: block;
+    border-left: 4px solid #f44336;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.export-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.export-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+
+.export-buttons {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+/* サマリー表示用スタイル */
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.summary-table th,
+.summary-table td {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    text-align: left;
+}
+
+.summary-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.summary-table tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.summary-table tr:hover {
+    background: #e9ecef;
+}
+
+.summary-icon {
+    margin-right: 0.5rem;
+}
+
+.summary-count {
+    font-weight: 600;
+    color: #495057;
+}
+
+.summary-total {
+    background: #e3f2fd !important;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.summary-zero {
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* サマリーダイアログ専用スタイル */
+.summary-dialog-content {
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.summary-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.summary-close-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+.summary-scroll-content {
+    padding: 1rem 2rem 2rem 2rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+/* スクロールバーのスタイル */
+.summary-scroll-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.summary-scroll-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.summary-scroll-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.summary-scroll-content::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+.footer {
+    margin-top: 30px;
+    padding: 15px;
+    text-align: center;
+    border-top: 1px solid #000000;
+    color: #6c757d;
+}
+
+/* ポップアップのカスタムスタイル */
+.leaflet-popup-content {
+    width: auto !important;
+    max-width: 350px !important;
+    min-width: 280px !important;
+}
+
+.popup-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px;
+    margin: -10px -10px 10px -10px;
+    border-radius: 6px 6px 0 0;
+    font-weight: 600;
+    text-align: center;
+}
+
+.popup-section {
+    margin-bottom: 10px;
+}
+
+.popup-section h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 2px;
+}
+
+.popup-item {
+    display: flex;
+    margin-bottom: 3px;
+    font-size: 0.85rem;
+}
+
+.popup-label {
+    font-weight: 600;
+    color: #495057;
+    min-width: 70px;
+    margin-right: 5px;
+}
+
+.popup-value {
+    color: #212529;
+    flex: 1;
+}
+
+.popup-coordinates {
+    font-family: 'Courier New', monospace;
+    background: #f1f3f4;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+}
+
+.popup-links {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.popup-links a {
+    display: inline-block;
+    margin: 2px;
+    padding: 3px 6px;
+    background: #17a2b8;
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+    font-size: 0.75rem;
+}
+
+.popup-links a:hover {
+    background: #138496;
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .object-types {
+        grid-template-columns: 1fr;
+    }
+    
+    .buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    /* モバイルでは間隔調整を無効化 */
+    .btn-spacing {
+        margin-right: 0;
+    }
+    
+    #map {
+        height: 500px;
+    }
+    
+    /* ズームインジケーターをモバイル用に調整 */
+    .zoom-indicator {
+        top: 5px;
+        right: 5px;
+        padding: 6px 8px;
+        font-size: 0.8rem;
+        min-width: 100px;
+    }
+    
+    .zoom-status {
+        font-size: 0.7rem;
+    }
+
+    /* 場所検索のモバイル対応 */
+    .search-input-group {
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+    
+    .search-btn {
+        width: 100%;
+    }
+    
+    .location-search h3 {
+        font-size: 1rem;
+    }
+    
+    /* モバイル用ポップアップ調整 */
+    .leaflet-popup-content {
+        max-width: 280px !important;
+        min-width: 250px !important;
+    }
+    
+    .popup-item {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .popup-label {
+        min-width: auto;
+        margin-right: 0;
+        font-size: 0.8rem;
+    }
+    
+    .popup-value {
+        font-size: 0.85rem;
+    }
+    
+    .popup-links a {
+        display: block;
+        margin: 3px 0;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+
+    /* モバイル用ツールチップ調整 */
+    .tooltip .tooltiptext {
+        top: 125%;
+        bottom: auto;
+        width: 180px;
+        margin-left: -90px;
+    }
+    
+    .tooltip .tooltiptext::after {
+        top: -10px;
+        border-color: transparent transparent #333 transparent;
+    }
+
+    /* サマリーダイアログのモバイル対応 */
+    .summary-dialog-content {
+        max-width: 95vw;
+        max-height: 85vh;
+        margin: 0 1rem;
+    }
+    
+    .summary-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .summary-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .summary-close-btn {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    .summary-scroll-content {
+        padding: 1rem;
+    }
+    
+    .summary-table {
+        font-size: 0.8rem;
+    }
+    
+    .summary-table th,
+    .summary-table td {
+        padding: 0.4rem;
+    }
+}
