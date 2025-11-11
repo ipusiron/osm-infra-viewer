@@ -341,11 +341,11 @@ function generatePopup(element, markerInfo) {
     } else if (tags['addr:city'] || tags['addr:street']) {
         // 住所を組み立て
         let addressParts = [];
-        if (tags['addr:state']) addressParts.push(tags['addr:state']);
-        if (tags['addr:city']) addressParts.push(tags['addr:city']);
-        if (tags['addr:suburb']) addressParts.push(tags['addr:suburb']);
-        if (tags['addr:street']) addressParts.push(tags['addr:street']);
-        if (tags['addr:housenumber']) addressParts.push(tags['addr:housenumber']);
+        if (tags['addr:state']) addressParts.push(escapeHtml(tags['addr:state']));
+        if (tags['addr:city']) addressParts.push(escapeHtml(tags['addr:city']));
+        if (tags['addr:suburb']) addressParts.push(escapeHtml(tags['addr:suburb']));
+        if (tags['addr:street']) addressParts.push(escapeHtml(tags['addr:street']));
+        if (tags['addr:housenumber']) addressParts.push(escapeHtml(tags['addr:housenumber']));
         
         if (addressParts.length > 0) {
             content += `<div class="popup-item">
