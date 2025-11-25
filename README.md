@@ -1,3 +1,40 @@
+<!--
+---
+id: day011
+slug: osm-infra-viewer
+
+title: "OSM Infrastructure Viewer"
+
+subtitle_ja: "OSMインフラ可視化ツール"
+subtitle_en: "OpenStreetMap Infrastructure Visualization Tool"
+
+description_ja: "OSM（OpenStreetMap）に登録されたCCTVカメラ、携帯基地局、ATMなど20種類以上のインフラオブジェクトを地図上に可視化するWebアプリケーション"
+description_en: "A web application that visualizes 20+ infrastructure objects registered in OpenStreetMap, including CCTV cameras, cell towers, ATMs, and more on an interactive map"
+
+category_ja:
+  - OSINT
+  - 地理情報
+category_en:
+  - OSINT
+  - Geospatial
+
+difficulty: 1
+
+tags:
+  - OpenStreetMap
+  - Leaflet
+  - OSINT
+  - GIS
+  - Geolocation
+  - Infrastructure
+
+repo_url: "https://github.com/ipusiron/osm-infra-viewer"
+demo_url: "https://ipusiron.github.io/osm-infra-viewer/"
+
+hub: true
+---
+-->
+
 # OSMインフラ可視化ツール（OSM Infrastructure Viewer）
 
 [![GitHub Stars](https://img.shields.io/github/stars/ipusiron/osm-infra-viewer?style=social)](https://github.com/ipusiron/osm-infra-viewer/stargazers)
