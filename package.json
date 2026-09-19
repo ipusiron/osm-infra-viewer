@@ -1,0 +1,7 @@
+{
+  "name": "osm-infra-viewer",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

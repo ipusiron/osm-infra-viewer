@@ -3,179 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com;
+        style-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https://tile.openstreetmap.org;
+        connect-src https://overpass-api.de https://nominatim.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <!-- OSMタイルの利用規約が有効なRefererを求めるため、外部にはオリジンだけを送ります。 -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <title>OSMインフラ可視化ツール</title>
     
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+        integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="anonymous" />
     
     <!-- Leaflet MarkerCluster CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"
+        integrity="sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
+        integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" />
     
     <!-- カスタムスタイルシート -->
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="header">
+    <noscript>このツールを利用するにはJavaScriptを有効にしてください。</noscript>
+    <header class="header">
         <h1>🗺️ OSMインフラ可視化ツール</h1>
         <p>OpenStreetMapの様々なインフラオブジェクトを可視化</p>
-    </div>
+        <button id="themeToggle" class="btn btn-secondary" aria-label="ダークモード切替" aria-pressed="false">🌙</button>
+    </header>
 
-    <div class="controls">
+    <main class="app">
+    <section class="panel controls">
         <!-- 場所検索機能 -->
         <div class="location-search">
-            <h3>📍 場所検索・ジャンプ</h3>
+            <h2>📍 場所検索・ジャンプ</h2>
             <div class="search-input-group">
-                <input type="text" id="locationInput" class="location-input" placeholder="住所、地名、または座標を入力 (例: 渋谷駅, 35.6762,139.6503)">
-                <button class="btn btn-info search-btn" onclick="searchLocation()">🔍 移動</button>
+                <input type="text" id="locationInput" aria-label="住所、地名、または座標" class="location-input" placeholder="住所、地名、または座標を入力 (例: 渋谷駅, 35.6762,139.6503)">
+                <button class="btn btn-info search-btn" id="locationSearchBtn">🔍 移動</button>
             </div>
             <div class="search-examples">
                 <small>例: 東京駅 / 新宿区役所 / 35.6762,139.6503 / Tokyo Station</small>
             </div>
         </div>
 
-        <h3>表示するオブジェクトを選択:</h3>
+        <h2>表示するオブジェクトを選択</h2>
         
         <div class="object-types">
             <!-- 監視・セキュリティ -->
-            <div class="category">
-                <div class="category-title">🔒 監視・セキュリティ</div>
-                <div class="checkbox-item">
+            <fieldset class="category">
+                <legend class="category-title">🔒 監視・セキュリティ</legend>
+                <label class="checkbox-item" for="surveillance">
                     <input type="checkbox" id="surveillance" checked>
-                    <label for="surveillance">📹 CCTVカメラ</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>📹 CCTVカメラ</span>
+                </label>
+                <label class="checkbox-item" for="police">
                     <input type="checkbox" id="police">
-                    <label for="police">🚓 警察関連施設</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🚓 警察関連施設</span>
+                </label>
+                <label class="checkbox-item" for="emergency">
                     <input type="checkbox" id="emergency">
-                    <label for="emergency">🆘 緊急電話</label>
-                </div>
-            </div>
+                    <span>🆘 緊急電話</span>
+                </label>
+            </fieldset>
 
             <!-- 通信・ネットワーク -->
-            <div class="category">
-                <div class="category-title">📡 通信・ネットワーク</div>
-                <div class="checkbox-item">
+            <fieldset class="category">
+                <legend class="category-title">📡 通信・ネットワーク</legend>
+                <label class="checkbox-item" for="tower">
                     <input type="checkbox" id="tower">
-                    <label for="tower">📡 携帯基地局</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>📡 通信塔・タワー</span>
+                </label>
+                <label class="checkbox-item" for="wifi">
                     <input type="checkbox" id="wifi" checked>
-                    <label for="wifi">📶 Wi-Fiホットスポット</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>📶 Wi-Fiホットスポット</span>
+                </label>
+                <label class="checkbox-item" for="antenna">
                     <input type="checkbox" id="antenna">
-                    <label for="antenna">📻 アンテナ・マスト</label>
-                </div>
-            </div>
+                    <span>📻 アンテナ・マスト</span>
+                </label>
+            </fieldset>
 
             <!-- 電力・エネルギー -->
-            <div class="category">
-                <div class="category-title">⚡ 電力・エネルギー</div>
-                <div class="checkbox-item">
+            <fieldset class="category">
+                <legend class="category-title">⚡ 電力・エネルギー</legend>
+                <label class="checkbox-item" for="substation">
                     <input type="checkbox" id="substation">
-                    <label for="substation">⚡ 変電所</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>⚡ 変電所</span>
+                </label>
+                <label class="checkbox-item" for="power_pole">
                     <input type="checkbox" id="power_pole">
-                    <label for="power_pole">🗼 電柱・鉄塔</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🗼 電柱・鉄塔</span>
+                </label>
+                <label class="checkbox-item" for="generator">
                     <input type="checkbox" id="generator">
-                    <label for="generator">🔋 発電機</label>
-                </div>
-            </div>
+                    <span>🔋 発電設備</span>
+                </label>
+            </fieldset>
 
             <!-- 交通・輸送 -->
-            <div class="category">
-                <div class="category-title">🚦 交通・輸送</div>
-                <div class="checkbox-item">
+            <fieldset class="category">
+                <legend class="category-title">🚦 交通・輸送</legend>
+                <label class="checkbox-item" for="traffic_signals">
                     <input type="checkbox" id="traffic_signals">
-                    <label for="traffic_signals">🚦 信号機</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🚦 信号機</span>
+                </label>
+                <label class="checkbox-item" for="speed_camera">
                     <input type="checkbox" id="speed_camera">
-                    <label for="speed_camera">📸 交通監視カメラ</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>📸 速度違反取締カメラ</span>
+                </label>
+                <label class="checkbox-item" for="fuel_station">
                     <input type="checkbox" id="fuel_station">
-                    <label for="fuel_station">⛽ ガソリンスタンド</label>
-                </div>
-            </div>
+                    <span>⛽ ガソリンスタンド</span>
+                </label>
+            </fieldset>
 
             <!-- その他のインフラ -->
-            <div class="category">
-                <div class="category-title">🏢 その他のインフラ</div>
-                <div class="checkbox-item">
+            <fieldset class="category">
+                <legend class="category-title">🏢 その他のインフラ</legend>
+                <label class="checkbox-item" for="atm">
                     <input type="checkbox" id="atm">
-                    <label for="atm">🏧 ATM</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🏧 ATM</span>
+                </label>
+                <label class="checkbox-item" for="post_box">
                     <input type="checkbox" id="post_box">
-                    <label for="post_box">📮 郵便ポスト</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>📮 郵便ポスト</span>
+                </label>
+                <label class="checkbox-item" for="waste_disposal">
                     <input type="checkbox" id="waste_disposal">
-                    <label for="waste_disposal">🗑️ ゴミ処理施設</label>
-                </div>
-            </div>
+                    <span>🗑️ ゴミ集積所</span>
+                </label>
+            </fieldset>
 
             <!-- 施設・サービス -->
-            <div class="category">
-                <div class="category-title">🏛️ 施設・サービス</div>
-                <div class="checkbox-item">
+            <fieldset class="category">
+                <legend class="category-title">🏛️ 施設・サービス</legend>
+                <label class="checkbox-item" for="bank">
                     <input type="checkbox" id="bank">
-                    <label for="bank">🏦 銀行</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🏦 銀行</span>
+                </label>
+                <label class="checkbox-item" for="hospital">
                     <input type="checkbox" id="hospital">
-                    <label for="hospital">🏥 病院</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🏥 病院</span>
+                </label>
+                <label class="checkbox-item" for="school">
                     <input type="checkbox" id="school">
-                    <label for="school">🏫 学校</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🏫 学校</span>
+                </label>
+                <label class="checkbox-item" for="restaurant">
                     <input type="checkbox" id="restaurant">
-                    <label for="restaurant">🍽️ レストラン</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🍽️ レストラン</span>
+                </label>
+                <label class="checkbox-item" for="shop">
                     <input type="checkbox" id="shop">
-                    <label for="shop">🛒 ショップ</label>
-                </div>
-                <div class="checkbox-item">
+                    <span>🛒 ショップ</span>
+                </label>
+                <label class="checkbox-item" for="parking">
                     <input type="checkbox" id="parking">
-                    <label for="parking">🅿️ 駐車場</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="buttons">
-            <button class="btn btn-success" onclick="selectAll()">全選択</button>
-            <button class="btn btn-danger" onclick="selectNone()">全解除</button>
-            <button class="btn btn-primary" id="searchBtn" onclick="searchInfrastructure()">🔍 検索</button>
-            <button class="btn btn-info btn-spacing" onclick="showResultSummary()">📊 検索結果サマリー</button>
-            <button class="btn btn-info" onclick="showExportDialog()">💾 データ出力</button>
-            <div class="tooltip">
-                <button class="btn btn-secondary" onclick="toggleDebugMode()">⚙️ 開発者モード</button>
-                <span class="tooltiptext">デバッグ情報表示、テスト地点ジャンプ、簡単テストなどの開発者向け機能が利用できます</span>
-            </div>
+                    <span>🅿️ 駐車場</span>
+                </label>
+            </fieldset>
         </div>
 
         <!-- デバッグモード -->
-        <div id="debug-controls" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 2px dashed #ccc;">
-            <h4>🔧 開発者ツール</h4>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                <button class="btn btn-secondary" onclick="showDebugInfo()">デバッグ情報</button>
-                <button class="btn btn-secondary" onclick="jumpToTestLocation()">テスト地点</button>
-                <button class="btn btn-secondary" onclick="testSimpleQuery()">簡単テスト</button>
+        <div id="debug-controls" hidden>
+            <h3>🔧 開発者ツール</h3>
+            <div class="buttons">
+                <button class="btn btn-secondary" id="debugInfoBtn">デバッグ情報</button>
+                <button class="btn btn-secondary" id="testLocationBtn">テスト地点</button>
+            </div>
+            <pre id="debugOutput"></pre>
+        </div>
+
+        <div class="panel-actions">
+        <div class="buttons">
+            <button class="btn btn-success" id="selectAllBtn">全選択</button>
+            <button class="btn btn-danger" id="selectNoneBtn">全解除</button>
+            <button class="btn btn-primary" id="searchBtn">🔍 検索</button>
+            <button class="btn btn-info btn-spacing" id="summaryBtn">📊 検索結果サマリー</button>
+            <button class="btn btn-info" id="exportBtn">💾 データ出力</button>
+            <div class="tooltip">
+                <button class="btn btn-secondary" id="debugToggleBtn" aria-controls="debug-controls" aria-expanded="false" aria-describedby="debugHelp">⚙️ 開発者モード</button>
+                <span class="tooltiptext" id="debugHelp" role="tooltip">デバッグ情報表示、テスト地点へのジャンプが利用できます</span>
             </div>
         </div>
-    </div>
+        <div class="status" id="status" role="status" aria-live="polite" hidden></div>
+        </div>
+    </section>
 
-    <div class="status" id="status"></div>
+    <section class="map-area" aria-labelledby="mapHeading">
+        <h2 id="mapHeading" class="visually-hidden">地図</h2>
 
     <div class="map-container">
         <div id="map">
@@ -186,41 +202,47 @@
         </div>
     </div>
 
+    </section>
+    </main>
+
     <!-- エクスポートダイアログ -->
-    <div class="export-dialog" id="exportDialog">
+    <dialog class="export-dialog" id="exportDialog" aria-labelledby="exportHeading">
         <div class="export-content">
-            <h3>💾 データエクスポート</h3>
+            <h2 id="exportHeading">💾 データエクスポート</h2>
             <p id="exportMessage">どの形式で出力しますか？</p>
             <div class="export-buttons">
-                <button class="btn btn-success" onclick="exportToGeoJSON(); closeExportDialog();">📄 GeoJSON形式<br><small>Web用・軽量</small></button>
-                <button class="btn btn-info" onclick="exportToKML(); closeExportDialog();">🌍 KML形式<br><small>Google Earth用</small></button>
-                <button class="btn btn-secondary" onclick="closeExportDialog();">❌ キャンセル</button>
+                <button class="btn btn-success" id="geojsonBtn">📄 GeoJSON形式<br><small>Web用・軽量</small></button>
+                <button class="btn btn-info" id="kmlBtn">🌍 KML形式<br><small>Google Earth用</small></button>
+                <button class="btn btn-secondary" id="exportCloseBtn">❌ キャンセル</button>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- 検索結果サマリーダイアログ -->
-    <div class="export-dialog" id="summaryDialog">
+    <dialog class="export-dialog" id="summaryDialog" aria-labelledby="summaryHeading">
         <div class="export-content summary-dialog-content">
             <div class="summary-header">
-                <h3>📊 検索結果サマリー</h3>
-                <button class="btn btn-secondary summary-close-btn" onclick="closeSummaryDialog()">❌ 閉じる</button>
+                <h2 id="summaryHeading">📊 検索結果サマリー</h2>
+                <button class="btn btn-secondary summary-close-btn" id="summaryCloseBtn">❌ 閉じる</button>
             </div>
             <div id="summaryContent" class="summary-scroll-content">
                 <p>検索結果がありません</p>
             </div>
         </div>
-    </div>
+    </dialog>
 
-    <div class="footer">
-        🔗 GitHubリポジトリはこちら（<a href="https://github.com/ipusiron/osm-infra-viewer" target="_blank" style="color: #007bff; text-decoration: none;">ipusiron/osm-infra-viewer</a>）
-    </div>
+    <footer class="footer">
+        🔗 GitHubリポジトリーはこちら（<a href="https://github.com/ipusiron/osm-infra-viewer" target="_blank" rel="noopener noreferrer">ipusiron/osm-infra-viewer</a>）
+    </footer>
 
     <!-- JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+        integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"
+        integrity="sha512-TiMWaqipFi2Vqt4ugRzsF8oRoGFlFFuqIi30FFxEPNw58Ov9mOy6LgC05ysfkxwLE0xVeZtmr92wVg9siAFRWA==" crossorigin="anonymous"></script>
     
     <!-- カスタムスクリプト -->
+    <script src="osm-logic.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

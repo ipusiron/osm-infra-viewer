@@ -1,0 +1,25 @@
+[
+  {
+    "type": "node", "id": 1, "lat": 35.6595, "lon": 139.7006, "timestamp": "2024-01-02T03:04:05Z",
+    "tags": {
+      "man_made": "surveillance", "name": "cam & <b>bold</b>", "surveillance:type": "camera",
+      "camera:type": "dome", "surveillance": "public", "addr:city": "渋谷区", "addr:street": "道玄坂",
+      "addr:postcode": "150-0043"
+    }
+  },
+  { "type": "node", "id": 2, "lat": 0, "lon": 139.70, "tags": { "amenity": "atm", "name": "equator" } },
+  { "type": "node", "id": 3, "lat": 35.66, "lon": 0, "tags": { "amenity": "atm", "name": "meridian" } },
+  {
+    "type": "way", "id": 4, "center": { "lat": 35.661, "lon": 139.701 },
+    "tags": { "amenity": "restaurant", "internet_access": "wlan", "name": "Cafe" }
+  },
+  {
+    "type": "node", "id": 5, "lat": 35.662, "lon": 139.702,
+    "tags": { "man_made": "tower", "tower:type": "observation", "name": "A&B <Tower> \"x\" 'y'" }
+  },
+  { "type": "relation", "id": 6, "tags": { "amenity": "hospital" } },
+  {
+    "type": "node", "id": 7, "lat": 35.663, "lon": 139.703, "tags": { "shop": "bakery" },
+    "user": "someone", "uid": 42, "changeset": 99
+  }
+]
