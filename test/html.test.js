@@ -64,6 +64,17 @@ test('カテゴリー・種別の表とチェックボックスが一致', () =>
     assert.deepEqual([...html.matchAll(/<legend[^>]*>([^<]*)<\/legend>/g)].map(m => m[1]), CATEGORIES.map(c => c.title));
 });
 
+test('地図検索は補助ボタンの前に独立した主操作として配置', () => {
+    assert.match(attr(byId('searchBtn'), 'class'), /\binfra-search-btn\b/);
+    assert.match(html, /<div class="panel-actions">\s*<button[^>]*id="searchBtn"[^>]*>[^<]*<\/button>\s*<div class="buttons">/);
+    const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
+    const rule = css.match(/\.btn\.infra-search-btn\s*\{([^}]+)\}/)?.[1];
+    assert.ok(rule);
+    assert.match(rule, /width:\s*100%/);
+    assert.match(rule, /min-height:\s*56px/);
+    assert.match(rule, /font-weight:\s*700/);
+});
+
 test('ランドマーク・ダイアログ・読み上げ・見出し', () => {
     for (const id of ['locationInput', 'locationSearchBtn', 'searchBtn', 'selectAllBtn', 'selectNoneBtn', 'summaryBtn',
         'exportBtn', 'debugToggleBtn', 'themeToggle', 'status', 'map', 'zoomLevel', 'zoomStatus',

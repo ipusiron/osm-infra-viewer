@@ -188,7 +188,7 @@ body {
 
 .search-btn {
     padding: 0.6rem 1rem;
-    var(--header-fg)-space: nowrap;
+    white-space: nowrap;
     min-width: 80px;
 }
 
@@ -272,6 +272,17 @@ body {
 .btn-primary {
     background: var(--btn-primary);
     color: var(--btn-fg);
+}
+
+/* 地図の検索を主操作として、補助ボタンから独立させる。 */
+.btn.infra-search-btn {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    margin-bottom: 0.65rem;
+    padding: 0.8rem 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
 .btn-secondary {
