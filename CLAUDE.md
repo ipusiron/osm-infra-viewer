@@ -13,7 +13,7 @@ Day011の静的Webツールです。OpenStreetMapの21種別のインフラをLe
 - `style.css`: ライト／ダーク、2カラムとモバイルのレイアウト
 - `test/`: node:testとnode:assert/strictによるオフラインテスト
 - `.github/workflows/test.yml`: pushとpull_requestでNode 22のテスト
-- `assets/`: ファビコンと画面画像。旧screenshot.pngは保管
+- `assets/`: ファビコンとREADMEで参照する画面画像。UI変更時は同名で撮り直し、未使用画像は残さない
 - `package.json`: npm testのみ。依存パッケージなし
 
 ## 公開する定数と関数
