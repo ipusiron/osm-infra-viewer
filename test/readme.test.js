@@ -36,6 +36,10 @@ test('画像・ライセンス・シリーズ情報の参照が存在', () => {
     const images = [...readme.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map(m => m[1]).filter(p => !/^https?:/.test(p));
     assert.equal(images.length, 4);
     for (const file of images) assert.ok(fs.existsSync(path.join(root, file)), file);
+    const screenshots = fs.readdirSync(path.join(root, 'assets'))
+        .filter(file => /^screenshot.*\.png$/.test(file)).map(file => 'assets/' + file);
+    assert.deepEqual(screenshots.sort(), [...images].sort(), '参照されていない紹介画像を残さない');
+    for (const file of screenshots) assert.ok(fs.statSync(path.join(root, file)).size <= 500 * 1024, file);
     assert.ok(fs.existsSync(path.join(root, 'LICENSE')));
     assert.ok(readme.includes('Day011 - 生成AIで作るセキュリティツール100'));
     assert.ok(readme.includes('https://akademeia.info/?page_id=42163'));
