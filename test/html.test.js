@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { CATEGORIES, OBJECT_TYPES } = require('../osm-logic.js');
+const I18n = require('../i18n.js');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const attr = (tag, name) => tag.match(new RegExp(name + '="([^"]*)"'))?.[1];
 const tags = name => [...html.matchAll(new RegExp('<' + name + '\\b[^>]*>', 'g'))].map(m => m[0]);
@@ -41,7 +42,7 @@ test('CSP・Referer・SRI・古典スクリプトの順番', () => {
     assert.deepEqual(tags('script').map(t => attr(t, 'src')), [
         'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js',
-        'osm-logic.js', 'script.js'
+        'i18n.js', 'osm-logic.js', 'script.js'
     ]);
     assert.doesNotMatch(html, /type="module"|\son\w+\s*=|\sstyle\s*=/i);
     assert.match(html, /<noscript>/);
@@ -58,10 +59,11 @@ test('カテゴリー・種別の表とチェックボックスが一致', () =>
         const label = labels.find(m => attr(m[1], 'for') === type.id);
         assert.ok(label, type.id);
         const text = label[2].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-        assert.equal(text, type.icon + ' ' + type.label);
+        assert.equal(text, type.icon + ' ' + I18n.ja[type.labelKey]);
     }
     assert.equal(tags('fieldset').length, 6);
-    assert.deepEqual([...html.matchAll(/<legend[^>]*>([^<]*)<\/legend>/g)].map(m => m[1]), CATEGORIES.map(c => c.title));
+    assert.deepEqual([...html.matchAll(/<legend[^>]*>([^<]*)<\/legend>/g)].map(m => m[1]),
+        CATEGORIES.map(c => I18n.ja[c.titleKey]));
 });
 
 test('地図検索は補助ボタンの前に独立した主操作として配置', () => {
@@ -77,7 +79,7 @@ test('地図検索は補助ボタンの前に独立した主操作として配�
 
 test('ランドマーク・ダイアログ・読み上げ・見出し', () => {
     for (const id of ['locationInput', 'locationSearchBtn', 'searchBtn', 'selectAllBtn', 'selectNoneBtn', 'summaryBtn',
-        'exportBtn', 'debugToggleBtn', 'themeToggle', 'status', 'map', 'zoomLevel', 'zoomStatus',
+        'exportBtn', 'debugToggleBtn', 'themeToggle', 'langToggle', 'status', 'map', 'zoomLevel', 'zoomStatus',
         'summaryContent', 'exportMessage', 'debugOutput']) assert.ok(byId(id), id);
     assert.equal(attr(byId('status'), 'role'), 'status');
     assert.equal(attr(byId('status'), 'aria-live'), 'polite');

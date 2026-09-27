@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const L = require('../osm-logic.js');
+const I18n = require('../i18n.js');
+// 出力する種別名は表示側から渡す。ここでは日本語の辞書を渡して、辞書と期待値の食い違いも見る。
+const jaLabels = Object.fromEntries([...L.OBJECT_TYPES, { id: 'other', labelKey: 'type.other' }]
+    .map(type => [type.id, I18n.ja[type.labelKey]]));
 const fixture = require('./fixture.json');
 const selected = ['surveillance', 'atm', 'restaurant', 'tower', 'hospital'];
 const bbox = { south: 35.65, west: 139.69, north: 35.67, east: 139.71 };
@@ -93,10 +97,12 @@ test('A-7・A-8: URLエンコードとズーム区分', () => {
     const suffix = '&limit=1&addressdetails=1';
     assert.equal(L.buildNominatimUrl('東京駅'), prefix + '%E6%9D%B1%E4%BA%AC%E9%A7%85' + suffix);
     assert.equal(L.buildNominatimUrl('a&b=c #'), prefix + 'a%26b%3Dc%20%23' + suffix);
-    for (const [values, key, label, level] of [
-        [[18, 13], 'detail', '詳細範囲', 'ok'], [[12.9, 10], 'medium', '中範囲', 'ok'],
-        [[9.9, 7], 'wide', '広範囲（時間要注意）', 'warning'], [[6.9, 0], 'huge', '超広範囲（時間かかる）', 'ng']
-    ]) for (const zoom of values) assert.deepEqual(L.zoomCategory(zoom), { key, label, level });
+    // 文言はi18n.jsが持つ。ロジックはキーと段階だけを返す。
+    for (const [values, key, level] of [
+        [[18, 13], 'detail', 'ok'], [[12.9, 10], 'medium', 'ok'],
+        [[9.9, 7], 'wide', 'warning'], [[6.9, 0], 'huge', 'ng']
+    ]) for (const zoom of values) assert.deepEqual(L.zoomCategory(zoom), { key, level });
+    for (const key of ['detail', 'medium', 'wide', 'huge']) assert.ok(I18n.ja['zoom.' + key]);
 });
 
 test('A-9: HTTP status、JSON構造、警告、途中の結果を区別', () => {
@@ -125,25 +131,29 @@ test('A-10・A-11: OSM参照の許可リストと日付', () => {
     for (const id of [1.5, '1', 0, Number.MAX_SAFE_INTEGER + 1]) assert.equal(L.osmRef({ type: 'node', id }), null);
     for (const type of ['area', 'node"><img src=x onerror="window.__xss=1">']) assert.equal(L.osmRef({ type, id: 1 }), null);
     assert.equal(L.formatDate('2024-01-02T03:04:05Z'), '2024-01-02');
-    for (const value of ['yesterday', undefined, 12345]) assert.equal(L.formatDate(value), '不明');
+    for (const value of ['yesterday', undefined, 12345]) assert.equal(L.formatDate(value), null);
 });
 
 test('A-12: ポップアップモデルの順番・生テキスト・安全なリンク', () => {
     const bad = { type: 'node"><img src=x onerror="window.__xss=1">', id: 9, lat: 35.6, lon: 139.7, tags: { amenity: 'bank' } };
     const unsafe = L.buildPopupModel(bad);
-    assert.equal(unsafe.label, '銀行');
+    assert.equal(unsafe.labelKey, 'type.bank');
+    assert.equal(I18n.ja[unsafe.labelKey], '銀行');
     assert.equal(unsafe.links.length, 2);
-    assert.equal(unsafe.sections.at(-1).items[0].value, '不明');
+    assert.deepEqual(unsafe.sections.at(-1).items[0], { labelKey: 'popup.osmId', valueKey: 'popup.unknown' });
     assert.doesNotMatch(JSON.stringify(unsafe), /onerror/);
     const model = L.buildPopupModel(fixture[0], ['surveillance']);
-    assert.equal(model.label, 'CCTVカメラ');
+    assert.equal(model.labelKey, 'type.surveillance');
     assert.equal(model.sections[0].items[0].value, 'cam & <b>bold</b>');
-    assert.deepEqual(model.sections[1], { heading: '🔎 詳細', items: [
-        { label: '監視の種類', value: 'camera' }, { label: '監視対象', value: 'public' }, { label: 'カメラ形式', value: 'dome' }
+    assert.deepEqual(model.sections[1], { headingKey: 'popup.section.detail', items: [
+        { labelKey: 'popup.surveillanceType', value: 'camera' },
+        { labelKey: 'popup.surveillance', value: 'public' },
+        { labelKey: 'popup.cameraType', value: 'dome' }
     ] });
-    assert.deepEqual(model.sections[2], { heading: '📍 住所・位置情報', items: [
-        { label: '住所', value: '渋谷区道玄坂' }, { label: '郵便番号', value: '〒150-0043' },
-        { label: '座標', value: '35.659500, 139.700600' }
+    assert.deepEqual(model.sections[2], { headingKey: 'popup.section.location', items: [
+        { labelKey: 'popup.address', value: '渋谷区道玄坂' },
+        { labelKey: 'popup.postcode', valueKey: 'popup.postcodeValue', values: { code: '150-0043' } },
+        { labelKey: 'popup.coordinates', value: '35.659500, 139.700600' }
     ] });
     assert.deepEqual(model.sections[3].items.map(i => i.value), ['node/1', '2024-01-02']);
     assert.equal(model.links.length, 3);
@@ -158,7 +168,11 @@ test('A-13・A-14・A-18: サマリーとGeoJSONの件数・分類・帰属・�
     assert.deepEqual([summary.total, summary.skipped, summary.other], [6, 1, 1]);
     assert.deepEqual(summary.categories.flatMap(c => c.items).filter(i => i.count).map(i => [i.id, i.count]),
         [['surveillance', 1], ['tower', 1], ['atm', 2], ['restaurant', 1]]);
-    const data = L.toGeoJSON(fixture, selected, '2026-09-19T12:03:03.456Z');
+    const data = L.toGeoJSON(fixture, selected, '2026-09-19T12:03:03.456Z', jaLabels);
+    assert.deepEqual(data.features.map(f => f.properties.infraLabel),
+        ['CCTVカメラ', 'ATM', 'ATM', 'レストラン', '通信塔・タワー', 'その他']);
+    // 対応表を渡さないときは種別IDを入れる。訳の取り違えより、機械可読な値を残す。
+    assert.equal(L.toGeoJSON(fixture, selected, 'x').features[0].properties.infraLabel, 'surveillance');
     assert.equal(data.features.length, 6);
     assert.equal(data.metadata.count, 6);
     assert.equal(data.metadata.license, 'ODbL 1.0');
@@ -179,7 +193,8 @@ test('A-13・A-14・A-18: サマリーとGeoJSONの件数・分類・帰属・�
 
 test('A-15・A-16・A-17・A-18: XMLとファイル名の厳密一致', () => {
     assert.equal(L.escapeXml('A&B <Tower> "x" \'y\'\u0001'), 'A&amp;B &lt;Tower&gt; &quot;x&quot; &apos;y&apos;');
-    const kml = L.toKML(fixture, selected);
+    const kml = L.toKML(fixture, selected, jaLabels);
+    assert.ok(L.toKML(fixture, selected).includes('<name>tower: A&amp;B'));
     const expected = [
         '    <Placemark>', '      <name>通信塔・タワー: A&amp;B &lt;Tower&gt; &quot;x&quot; &apos;y&apos;</name>',
         '      <ExtendedData>', '        <Data name="infraType"><value>tower</value></Data>',

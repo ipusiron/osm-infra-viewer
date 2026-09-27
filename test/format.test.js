@@ -5,7 +5,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 
 test('可読性を保つ行長と主要ファイルの行数', () => {
-    const names = ['script.js', 'osm-logic.js', 'style.css', 'index.html',
+    const names = ['script.js', 'osm-logic.js', 'i18n.js', 'style.css', 'index.html',
         ...fs.readdirSync(__dirname).filter(name => name.endsWith('.js')).map(name => 'test/' + name)];
     for (const name of names) {
         const lines = fs.readFileSync(path.join(root, name), 'utf8').split(/\r?\n/);
@@ -15,7 +15,8 @@ test('可読性を保つ行長と主要ファイルの行数', () => {
             assert.ok(line.length <= maximum, name + ':' + (index + 1) + ' is ' + line.length);
         });
     }
-    for (const [name, minimum] of [['style.css', 400], ['script.js', 350], ['osm-logic.js', 150]]) {
+    for (const [name, minimum] of [['style.css', 400], ['script.js', 350], ['osm-logic.js', 150],
+        ['i18n.js', 250]]) {
         assert.ok(fs.readFileSync(path.join(root, name), 'utf8').split('\n').length >= minimum, name);
     }
 });

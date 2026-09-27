@@ -1,37 +1,32 @@
 // DOM・地図・通信に依存しない、検索結果の変換処理。
 const OsmInfraLogic = (() => {
-    const CATEGORIES = [
-        { id: 'security', title: '🔒 監視・セキュリティ' },
-        { id: 'network', title: '📡 通信・ネットワーク' },
-        { id: 'power', title: '⚡ 電力・エネルギー' },
-        { id: 'transport', title: '🚦 交通・輸送' },
-        { id: 'misc', title: '🏢 その他のインフラ' },
-        { id: 'facility', title: '🏛️ 施設・サービス' }
-    ];
+    // 表示する文言はi18n.jsが持つ。ここではキー（labelKey・titleKey）だけを扱う。
+    const CATEGORIES = ['security', 'network', 'power', 'transport', 'misc', 'facility']
+        .map(id => ({ id, titleKey: 'category.' + id }));
     const OBJECT_TYPES = [
-        ['surveillance', 'security', '📹', 'CCTVカメラ', [['man_made', 'surveillance']]],
-        ['police', 'security', '🚓', '警察関連施設', [['amenity', 'police']]],
-        ['emergency', 'security', '🆘', '緊急電話', [['emergency', 'phone']]],
-        ['tower', 'network', '📡', '通信塔・タワー', [['man_made', 'communications_tower'], ['man_made', 'tower']]],
-        ['wifi', 'network', '📶', 'Wi-Fiホットスポット', [['internet_access', 'wlan']]],
-        ['antenna', 'network', '📻', 'アンテナ・マスト', [['man_made', 'mast'], ['man_made', 'antenna']]],
-        ['substation', 'power', '⚡', '変電所', [['power', 'substation']]],
-        ['power_pole', 'power', '🗼', '電柱・鉄塔', [['power', 'pole'], ['power', 'tower']]],
-        ['generator', 'power', '🔋', '発電設備', [['power', 'generator']]],
-        ['traffic_signals', 'transport', '🚦', '信号機', [['highway', 'traffic_signals']]],
-        ['speed_camera', 'transport', '📸', '速度違反取締カメラ', [['highway', 'speed_camera']]],
-        ['fuel_station', 'transport', '⛽', 'ガソリンスタンド', [['amenity', 'fuel']]],
-        ['atm', 'misc', '🏧', 'ATM', [['amenity', 'atm']]],
-        ['post_box', 'misc', '📮', '郵便ポスト', [['amenity', 'post_box']]],
-        ['waste_disposal', 'misc', '🗑️', 'ゴミ集積所', [['amenity', 'waste_disposal']]],
-        ['bank', 'facility', '🏦', '銀行', [['amenity', 'bank']]],
-        ['hospital', 'facility', '🏥', '病院', [['amenity', 'hospital']]],
-        ['school', 'facility', '🏫', '学校', [['amenity', 'school']]],
-        ['restaurant', 'facility', '🍽️', 'レストラン', [['amenity', 'restaurant']]],
-        ['shop', 'facility', '🛒', 'ショップ', [['shop', 'supermarket'], ['shop', 'convenience']]],
-        ['parking', 'facility', '🅿️', '駐車場', [['amenity', 'parking']]]
-    ].map(([id, category, icon, label, tags]) => ({ id, category, icon, label, tags }));
-    const OTHER = { id: 'other', category: 'other', icon: '📍', label: 'その他' };
+        ['surveillance', 'security', '📹', [['man_made', 'surveillance']]],
+        ['police', 'security', '🚓', [['amenity', 'police']]],
+        ['emergency', 'security', '🆘', [['emergency', 'phone']]],
+        ['tower', 'network', '📡', [['man_made', 'communications_tower'], ['man_made', 'tower']]],
+        ['wifi', 'network', '📶', [['internet_access', 'wlan']]],
+        ['antenna', 'network', '📻', [['man_made', 'mast'], ['man_made', 'antenna']]],
+        ['substation', 'power', '⚡', [['power', 'substation']]],
+        ['power_pole', 'power', '🗼', [['power', 'pole'], ['power', 'tower']]],
+        ['generator', 'power', '🔋', [['power', 'generator']]],
+        ['traffic_signals', 'transport', '🚦', [['highway', 'traffic_signals']]],
+        ['speed_camera', 'transport', '📸', [['highway', 'speed_camera']]],
+        ['fuel_station', 'transport', '⛽', [['amenity', 'fuel']]],
+        ['atm', 'misc', '🏧', [['amenity', 'atm']]],
+        ['post_box', 'misc', '📮', [['amenity', 'post_box']]],
+        ['waste_disposal', 'misc', '🗑️', [['amenity', 'waste_disposal']]],
+        ['bank', 'facility', '🏦', [['amenity', 'bank']]],
+        ['hospital', 'facility', '🏥', [['amenity', 'hospital']]],
+        ['school', 'facility', '🏫', [['amenity', 'school']]],
+        ['restaurant', 'facility', '🍽️', [['amenity', 'restaurant']]],
+        ['shop', 'facility', '🛒', [['shop', 'supermarket'], ['shop', 'convenience']]],
+        ['parking', 'facility', '🅿️', [['amenity', 'parking']]]
+    ].map(([id, category, icon, tags]) => ({ id, category, icon, labelKey: 'type.' + id, tags }));
+    const OTHER = { id: 'other', category: 'other', icon: '📍', labelKey: 'type.other' };
     const typeOf = id => OBJECT_TYPES.find(type => type.id === id) || OTHER;
 
     function normalizeBbox(bbox) {
@@ -83,10 +78,10 @@ const OsmInfraLogic = (() => {
     }
 
     function zoomCategory(zoom) {
-        if (zoom >= 13) return { key: 'detail', label: '詳細範囲', level: 'ok' };
-        if (zoom >= 10) return { key: 'medium', label: '中範囲', level: 'ok' };
-        if (zoom >= 7) return { key: 'wide', label: '広範囲（時間要注意）', level: 'warning' };
-        return { key: 'huge', label: '超広範囲（時間かかる）', level: 'ng' };
+        if (zoom >= 13) return { key: 'detail', level: 'ok' };
+        if (zoom >= 10) return { key: 'medium', level: 'ok' };
+        if (zoom >= 7) return { key: 'wide', level: 'warning' };
+        return { key: 'huge', level: 'ng' };
     }
 
     function interpretOverpassResponse(status, contentType, bodyText) {
@@ -108,46 +103,63 @@ const OsmInfraLogic = (() => {
             && Number.isSafeInteger(element.id) && element.id > 0 ? `${element.type}/${element.id}` : null;
     }
 
+    // 日付が読めないときはnullを返し、表示側がpopup.unknownに訳す。
     function formatDate(timestamp) {
-        return typeof timestamp === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(timestamp) ? timestamp.slice(0, 10) : '不明';
+        return typeof timestamp === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(timestamp) ? timestamp.slice(0, 10) : null;
     }
 
     function buildPopupModel(element, selectedIds) {
         const tags = element?.tags || {};
         const type = typeOf(classify(tags, selectedIds));
         const sections = [];
-        const addTags = (heading, keys) => {
+        const addTags = (headingKey, keys) => {
             const items = keys.filter(([key]) => tags[key] != null && tags[key] !== '')
-                .map(([key, label]) => ({ label, value: String(tags[key]) }));
-            if (items.length) sections.push({ heading, items });
+                .map(([key, labelKey]) => ({ labelKey, value: String(tags[key]) }));
+            if (items.length) sections.push({ headingKey, items });
         };
-        addTags('📋 基本情報', [['name', '名称'], ['operator', '運営者'], ['brand', 'ブランド']]);
-        addTags('🔎 詳細', [
-            ['surveillance:type', '監視の種類'], ['surveillance', '監視対象'], ['surveillance:zone', '監視区域'],
-            ['camera:type', 'カメラ形式'], ['camera:mount', '設置方法'], ['tower:type', '塔の種類'],
-            ['height', '高さ'], ['generator:source', '発電方式'], ['generator:output:electricity', '発電出力'],
-            ['internet_access:fee', 'Wi-Fi料金'], ['internet_access:ssid', 'SSID'], ['opening_hours', '営業時間']
+        addTags('popup.section.basic', [
+            ['name', 'popup.name'], ['operator', 'popup.operator'], ['brand', 'popup.brand']
+        ]);
+        addTags('popup.section.detail', [
+            ['surveillance:type', 'popup.surveillanceType'], ['surveillance', 'popup.surveillance'],
+            ['surveillance:zone', 'popup.surveillanceZone'], ['camera:type', 'popup.cameraType'],
+            ['camera:mount', 'popup.cameraMount'], ['tower:type', 'popup.towerType'],
+            ['height', 'popup.height'], ['generator:source', 'popup.generatorSource'],
+            ['generator:output:electricity', 'popup.generatorOutput'],
+            ['internet_access:fee', 'popup.wifiFee'], ['internet_access:ssid', 'popup.ssid'],
+            ['opening_hours', 'popup.openingHours']
         ]);
         const address = tags.address || ['addr:state', 'addr:city', 'addr:suburb', 'addr:street', 'addr:housenumber']
             .map(key => tags[key] || '').join('');
         const items = [];
-        if (address) items.push({ label: '住所', value: String(address) });
-        if (tags['addr:postcode']) items.push({ label: '郵便番号', value: `〒${tags['addr:postcode']}` });
+        if (address) items.push({ labelKey: 'popup.address', value: String(address) });
+        if (tags['addr:postcode']) {
+            items.push({ labelKey: 'popup.postcode', valueKey: 'popup.postcodeValue',
+                values: { code: String(tags['addr:postcode']) } });
+        }
         const point = elementLatLon(element);
-        if (point) items.push({ label: '座標', value: `${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}` });
-        sections.push({ heading: address ? '📍 住所・位置情報' : '📍 位置情報', items });
+        if (point) {
+            items.push({ labelKey: 'popup.coordinates',
+                value: `${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}` });
+        }
+        sections.push({ headingKey: address ? 'popup.section.location' : 'popup.section.position', items });
         const ref = osmRef(element);
-        sections.push({ heading: '🗺️ システム情報', items: [
-            { label: 'OSM ID', value: ref || '不明' }, { label: '最終更新', value: formatDate(element?.timestamp) }
+        const date = formatDate(element?.timestamp);
+        sections.push({ headingKey: 'popup.section.system', items: [
+            ref ? { labelKey: 'popup.osmId', value: ref } : { labelKey: 'popup.osmId', valueKey: 'popup.unknown' },
+            date ? { labelKey: 'popup.lastUpdate', value: date }
+                : { labelKey: 'popup.lastUpdate', valueKey: 'popup.unknown' }
         ] });
         const links = [];
-        if (ref) links.push({ label: '📍 OSMで見る', url: `https://www.openstreetmap.org/${ref}` });
+        if (ref) links.push({ labelKey: 'popup.link.osm', url: `https://www.openstreetmap.org/${ref}` });
         if (point) {
             const coordinate = `${point.lat},${point.lon}`;
-            links.push({ label: '🗺️ Google Maps', url: `https://www.google.com/maps/search/?api=1&query=${coordinate}` });
-            links.push({ label: '👁️ Street View', url: `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${coordinate}` });
+            links.push({ labelKey: 'popup.link.gmaps',
+                url: `https://www.google.com/maps/search/?api=1&query=${coordinate}` });
+            links.push({ labelKey: 'popup.link.streetview',
+                url: `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${coordinate}` });
         }
-        return { typeId: type.id, icon: type.icon, label: type.label, sections, links };
+        return { typeId: type.id, icon: type.icon, labelKey: type.labelKey, sections, links };
     }
 
     function buildSummary(elements, selectedIds) {
@@ -162,16 +174,22 @@ const OsmInfraLogic = (() => {
             total: elements.length - skipped, skipped, other: counts.other || 0,
             categories: CATEGORIES.map(category => ({ ...category,
                 items: OBJECT_TYPES.filter(type => type.category === category.id)
-                    .map(({ id, icon, label }) => ({ id, icon, label, count: counts[id] || 0 }))
+                    .map(({ id, icon, labelKey }) => ({ id, icon, labelKey, count: counts[id] || 0 }))
             }))
         };
     }
 
-    function toGeoJSON(elements, selectedIds, exportedAtIso) {
+    // labelsは種別IDから表示名への対応表。表示中の言語の文言を画面側から渡す。
+    const labelOf = (labels, type) => {
+        const label = labels?.[type.id];
+        return typeof label === 'string' && label ? label : type.id;
+    };
+
+    function toGeoJSON(elements, selectedIds, exportedAtIso, labels) {
         const features = elements.filter(elementLatLon).map(element => {
             const { lat, lon } = elementLatLon(element);
             const type = typeOf(classify(element?.tags, selectedIds));
-            const properties = { infraType: type.id, infraLabel: type.label };
+            const properties = { infraType: type.id, infraLabel: labelOf(labels, type) };
             for (const key of ['name', 'operator', 'address', 'addr:street', 'addr:city', 'addr:postcode', 'fee',
                 'internet_access:fee', 'opening_hours', 'phone', 'website', 'height', 'surveillance:type']) {
                 properties[key] = element?.tags?.[key] ?? '';
@@ -192,11 +210,12 @@ const OsmInfraLogic = (() => {
         return String(text).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').replace(/[&<>"']/g, char => entities[char]);
     }
 
-    function toKML(elements, selectedIds) {
+    function toKML(elements, selectedIds, labels) {
         const placemarks = elements.filter(elementLatLon).map(element => {
             const { lat, lon } = elementLatLon(element);
             const type = typeOf(classify(element?.tags, selectedIds));
-            const name = element?.tags?.name ? `${type.label}: ${element.tags.name}` : type.label;
+            const label = labelOf(labels, type);
+            const name = element?.tags?.name ? `${label}: ${element.tags.name}` : label;
             return [
                 '    <Placemark>', `      <name>${escapeXml(name)}</name>`, '      <ExtendedData>',
                 `        <Data name="infraType"><value>${escapeXml(type.id)}</value></Data>`,

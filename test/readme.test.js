@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { CATEGORIES, OBJECT_TYPES } = require('../osm-logic.js');
+const I18n = require('../i18n.js');
 const root = path.join(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const readme = read('README.md');
@@ -11,13 +12,14 @@ const html = read('index.html');
 test('READMEの6つの種別表は定義と21行すべて一致', () => {
     const section = readme.split('## 🗂️ 対応インフラオブジェクト')[1].split('## 📖')[0];
     const headings = [...section.matchAll(/^### (.+)$/gm)].map(m => m[1].trim());
-    assert.deepEqual(headings, CATEGORIES.map(c => c.title));
+    assert.deepEqual(headings, CATEGORIES.map(c => I18n.ja[c.titleKey]));
     const rows = [...section.matchAll(/^\| ([^|]+) \| ([^|]+) \| ([^|]+) \|$/gm)]
         .filter(m => m[2].includes('`')).map(m => ({
             label: m[1].trim(), tags: [...m[2].matchAll(/`([^`]+)`/g)].map(t => t[1])
         }));
     assert.equal(rows.length, 21);
-    assert.deepEqual(rows, OBJECT_TYPES.map(type => ({ label: type.label, tags: type.tags.map(t => t.join('=')) })));
+    assert.deepEqual(rows, OBJECT_TYPES.map(type =>
+        ({ label: I18n.ja[type.labelKey], tags: type.tags.map(t => t.join('=')) })));
 });
 
 test('SRI・タイルURL・referrerが実装と一致', () => {

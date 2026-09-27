@@ -37,6 +37,8 @@ hub: true
 
 # OSM Infrastructure Viewer - OSMインフラ可視化ツール
 
+[English](README.en.md) · 日本語
+
 ![GitHub Repo stars](https://img.shields.io/github/stars/ipusiron/osm-infra-viewer?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/ipusiron/osm-infra-viewer?style=social)
 ![GitHub last commit](https://img.shields.io/github/last-commit/ipusiron/osm-infra-viewer)
@@ -77,6 +79,7 @@ CCTVカメラから通信塔・タワー、ATM、病院まで、21種別のイ�
 - **場所検索・ジャンプ**: 住所、地名、座標（緯度経度）による位置検索
 - **ズームレベル表示**: リアルタイムで検索範囲の状況を表示
 - **マーカークラスター**: 大量データの効率的な表示
+- **日本語・英語の切り替え**: ヘッダーのボタン、`?lang=ja` / `?lang=en`、ブラウザーの言語設定のいずれでも切り替え
 
 ### 🔍 検索・フィルター
 
@@ -87,7 +90,7 @@ CCTVカメラから通信塔・タワー、ATM、病院まで、21種別のイ�
 ### 📊 データ分析・出力
 
 - **検索結果サマリー**: カテゴリー別・種別別の件数統計
-- **データエクスポート**: GeoJSON（Web用）・KML（Google Earth用）形式に対応
+- **データエクスポート**: GeoJSON（Web用）・KML（Google Earth用）形式に対応。種別名は表示中の言語で書き出す
 - **詳細情報表示**: 各オブジェクトの属性情報、住所、外部リンク
 
 ### 🛠️ 開発者機能
@@ -185,7 +188,8 @@ Tokyo Station
 
 幅1024px以上では、左の操作パネルと右の地図を2カラムで表示します。操作パネルの種別一覧をスクロールしても、検索ボタンとステータスは下端に残ります。
 幅1023px以下では操作パネル、地図の順に縦積みになり、検索が終了するとステータスへ移動します。
-ヘッダー右端でテーマを切り替えられます。初回はOSの設定に従います。
+ヘッダー右端で言語とテーマを切り替えられます。テーマの初回はOSの設定に従います。
+言語は`?lang=ja` / `?lang=en`、保存した選択、ブラウザーの言語設定の順で決まります。検索結果や入力を表示したまま切り替えても、内容は消えずに訳し直します。
 
 ## 🎯 ユースケース
 
@@ -211,6 +215,7 @@ Tokyo Station
 | **[Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster)** | マーカークラスター機能 | 1.5.3 |
 | **[Overpass API](https://overpass-api.de/)** | OSMデータクエリ | - |
 | **[Nominatim API](https://nominatim.org/)** | ジオコーディング（住所→座標変換） | - |
+| **i18n.js** | 日本語・英語の文言と切り替え | - |
 
 ### 外部依存関係
 
@@ -219,7 +224,7 @@ Tokyo Station
 
 ### クエリと分類
 
-種別定義は`osm-logic.js`の`OBJECT_TYPES`に集約しています。21種別の25タグを固定順で処理し、各タグに対して`nwr`を1文生成します。`nwr`はnode・way・relationを対象とし、病院や駐車場などのrelationも取得します。
+種別定義は`osm-logic.js`の`OBJECT_TYPES`に集約しています。表示する文言は`i18n.js`が持ち、`osm-logic.js`はキー（`labelKey`・`titleKey`・`headingKey`）だけを返します。OSMのタグ名は固有名詞なので訳しません。21種別の25タグを固定順で処理し、各タグに対して`nwr`を1文生成します。`nwr`はnode・way・relationを対象とし、病院や駐車場などのrelationも取得します。
 
 ```text
 [out:json][timeout:15];
@@ -264,7 +269,7 @@ out center meta;
 | ポップアップのリンクを押したときだけ | openstreetmap.org・google.com | リンク先の地点・要素 |
 
 本ツール独自のサーバーに検索内容を保存する処理はありません。ただし、通信先のサービス側でのアクセスログの扱いは各サービスの方針に従います。
-ブラウザーのlocalStorageに保存するのはテーマの設定値だけです。検索語・結果・地図の位置は保存しません。
+ブラウザーのlocalStorageに保存するのはテーマと言語の設定値だけです。検索語・結果・地図の位置は保存しません。
 
 - APIキー不要
 - アクセス解析・追跡機能なし
@@ -346,16 +351,19 @@ osm-infra-viewer/
 │   ├── readme.test.js        # 文書・定義・画像参照の整合
 │   ├── html.test.js          # HTML・CSP・SRI
 │   ├── script.test.js        # 描画と通信処理の静的検証
+│   ├── i18n.test.js          # 辞書・data-i18n・状態の描き直し
 │   ├── contrast.test.js      # CSSからのコントラスト計算
 │   └── format.test.js        # 行長と可読性
 ├── .gitignore                # 追跡しないファイル
 ├── index.html                # 操作パネル・地図・ダイアログ
+├── i18n.js                    # 日本語・英語の辞書と切り替え
 ├── osm-logic.js               # DOM非依存の純粋ロジック
 ├── script.js                  # DOM・Leaflet・fetchの処理
 ├── style.css                  # レイアウト・ライト／ダーク
 ├── package.json               # 依存なしのテストコマンド
 ├── CLAUDE.md                  # 開発時のルール
 ├── README.md                  # このファイル
+├── README.en.md               # 英語版のREADME
 └── LICENSE                    # MITライセンス
 ```
 
