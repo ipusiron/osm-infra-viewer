@@ -813,8 +813,14 @@ h2 {
     margin-bottom: 0.4rem;
 }
 
-#themeToggle {
+#langToggle {
     margin-left: auto;
+    min-height: 44px;
+    padding: 0.4rem 0.7rem;
+    white-space: nowrap;
+}
+
+#themeToggle {
     min-width: 44px;
     min-height: 44px;
 }

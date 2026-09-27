@@ -7,7 +7,8 @@ Day011の静的Webツールです。OpenStreetMapの21種別のインフラをLe
 
 ## ファイル構成
 
-- `osm-logic.js`: DOM・Leaflet・通信・現在時刻に依存しない純粋ロジック
+- `i18n.js`: 日本語・英語の辞書と、`data-i18n`の適用・言語の保存・`languagechange`の発火
+- `osm-logic.js`: DOM・Leaflet・通信・現在時刻に依存しない純粋ロジック。文言は持たず、`labelKey`・`titleKey`・`headingKey`を返す
 - `script.js`: DOM構築、Leaflet操作、fetch、状態・タイマー・テーマの管理
 - `index.html`: 操作パネル、21個のチェックボックス、地図、2個のdialog
 - `style.css`: ライト／ダーク、2カラムとモバイルのレイアウト
@@ -55,7 +56,10 @@ Nominatimのリクエストは1秒以上あけます。上限はアプリケー�
 - CSPにunsafe-inline・unsafe-eval・metaで無効なframe-ancestorsを追加しない
 - SRIは配信ファイルのバイト列を計算してから変更。Leaflet 1.9.4とmarkercluster 1.5.3を無断で更新しない
 - 外部API・通信先・npm依存・CDNを増やさない
-- localStorageへの保存は検証済みのテーマ値だけ。入力や検索結果は保存しない
+- localStorageへの保存は検証済みのテーマ値と言語（ja／en）だけ。入力や検索結果は保存しない
+- 表示する文言は`i18n.js`に集約する。`osm-logic.js`と`script.js`に和文を直書きしない
+- OSMのタグ名（`power=tower`など）は訳さない。訳すのはタグの説明と画面の文言だけ
+- JSが書き込むスロット（`#searchBtn`・`#locationSearchBtn`・`#zoomStatus`・`#exportMessage`・`#summaryContent`）に`data-i18n`を付けない。状態から組み立て直す
 - 地図タイルの色を反転しない。Leaflet標準コントロールの配色を変更しない
 - successだけ5秒で消す。warning・errorは残し、新しい通知の前に古いタイマーを解除
 - 期待値を変更してテストを通さない。仕様の矛盾は報告して公開を止める
