@@ -162,6 +162,14 @@ Switching the language while results are on screen keeps the results and retrans
 
 ## 🎯 Use cases
 
+Ways of using this tool in particular
+
+- Checking how your own shop or facility appears on a public map (shop and facility managers): the popup shows, as registered in OSM, the Wi-Fi SSID, the watched zone and form of a surveillance camera, and the opening hours. For example, a point whose SSID tag is Sakura_Free shows Sakura_Free in the SSID field. Sort out what you tell your customers anyway from what you would rather not show outside, and use it to review your notices and device settings (OSM is a map anyone can edit, and its policy is to record facts that can be checked on the ground. Use it to review your own side, not to remove what is recorded)
+- Scouting before editing OSM (preparing a mapping party): the tool asks the Overpass API with `out center meta`, so the popup shows the last edit date and OSM ID of each point. Pick up points with an old last edit such as 2019-06-01, open the original data through the "📍 See on OSM" link, and make a list of places to check on the ground (old does not mean wrong; much equipment has not changed)
+- Making a map for a disaster-preparedness walk (neighborhood associations and school lessons): select hospitals, police facilities, schools, fuel stations and shops (supermarkets and convenience stores), search, and save as KML; each point gets a name such as "Hospital: Sakura Hospital". Load it into Google My Maps or similar and use it to discuss evacuation routes or as a handout on the day (some facilities are missing from OSM, and evacuation shelters are not among the tool's 21 types; use it alongside your local hazard map and the list of shelters)
+
+General uses
+
 - Security research and audits: analysing camera placement, assessing exposure
 - OSINT: gathering and analysing information about local infrastructure
 - Urban planning and area surveys: infrastructure density, accessibility
