@@ -80,3 +80,31 @@ test('YAMLコメント・ブロック形式・固定キーとキー順を維持'
     assert.match(yaml, /category_en:\r?\n  - OSINT\r?\n  - Geospatial/);
     assert.match(yaml, /tags:\r?\n  - OpenStreetMap\r?\n  - Leaflet\r?\n  - OSINT\r?\n  - GIS\r?\n  - Geolocation\r?\n  - Infrastructure/);
 });
+
+test('ユースケースの「このツールならではの使い方」の例は実ロジックと一致（日英）', () => {
+    const L = require('../osm-logic.js');
+    const en = read('README.en.md');
+    const bbox = { south: 37.7, west: 140.9, north: 37.8, east: 141.0 };
+    assert.ok(L.buildOverpassQuery(['wifi'], bbox).endsWith('out center meta;'));
+    const wifi = { type: 'node', id: 123, lat: 37.75, lon: 140.95, timestamp: '2019-06-01T09:30:00Z',
+        tags: { internet_access: 'wlan', 'internet_access:ssid': 'Sakura_Free' } };
+    const model = L.buildPopupModel(wifi, ['wifi']);
+    const items = model.sections.flatMap(s => s.items);
+    const value = key => items.find(item => item.labelKey === key).value;
+    assert.deepEqual([value('popup.ssid'), value('popup.lastUpdate')], ['Sakura_Free', '2019-06-01']);
+    assert.equal(model.links[0].url, 'https://www.openstreetmap.org/node/123');
+    assert.equal(I18n.ja['popup.link.osm'], '📍 OSMで見る');
+    assert.ok(readme.includes('「📍 OSMで見る」') && en.includes('"' + I18n.en['popup.link.osm'] + '"'));
+    for (const text of [readme, en]) assert.ok(text.includes('Sakura_Free') && text.includes('2019-06-01'));
+    const hospital = { type: 'node', id: 7, lat: 37.79, lon: 140.92,
+        tags: { amenity: 'hospital', name: 'さくら病院' } };
+    const kml = L.toKML([hospital], ['hospital'], { hospital: I18n.ja['type.hospital'] });
+    assert.ok(kml.includes('<name>病院: さくら病院</name>'));
+    assert.ok(readme.includes('「病院: さくら病院」'));
+    const kmlEn = L.toKML([{ ...hospital, tags: { amenity: 'hospital', name: 'Sakura Hospital' } }],
+        ['hospital'], { hospital: I18n.en['type.hospital'] });
+    assert.ok(kmlEn.includes('<name>Hospital: Sakura Hospital</name>'));
+    assert.ok(en.includes('"Hospital: Sakura Hospital"'));
+    assert.equal(L.OBJECT_TYPES.length, 21);
+    assert.ok(!L.OBJECT_TYPES.some(t => t.tags.some(([k, v]) => v === 'shelter' || k === 'emergency' && v !== 'phone')));
+});
