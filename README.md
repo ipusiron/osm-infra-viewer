@@ -361,9 +361,11 @@ osm-infra-viewer/
 │   ├── script.test.js        # 描画と通信処理の静的検証
 │   ├── i18n.test.js          # 辞書・data-i18n・状態の描き直し
 │   ├── contrast.test.js      # CSSからのコントラスト計算
+│   ├── theme-init.test.js    # テーマの初期判定と読み込み位置
 │   └── format.test.js        # 行長と可読性
 ├── .gitignore                # 追跡しないファイル
 ├── index.html                # 操作パネル・地図・ダイアログ
+├── theme-init.js              # 最初の描画の前にテーマ（ライト／ダーク）を決める
 ├── i18n.js                    # 日本語・英語の辞書と切り替え
 ├── osm-logic.js               # DOM非依存の純粋ロジック
 ├── script.js                  # DOM・Leaflet・fetchの処理

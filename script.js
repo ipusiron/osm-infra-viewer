@@ -470,13 +470,18 @@ function setupTheme() {
     let saved;
     try { saved = localStorage.getItem('theme'); } catch { /* 保存できなくても利用できる。 */ }
     let explicit = saved === 'light' || saved === 'dark';
+    const renderThemeButton = () => {
+        const dark = document.documentElement.dataset.theme === 'dark';
+        const button = document.getElementById('themeToggle');
+        button.setAttribute('aria-pressed', String(dark));
+        button.textContent = dark ? '☀️' : '🌙';
+    };
     const applyTheme = theme => {
         document.documentElement.dataset.theme = theme;
-        const button = document.getElementById('themeToggle');
-        button.setAttribute('aria-pressed', String(theme === 'dark'));
-        button.textContent = theme === 'dark' ? '☀️' : '🌙';
+        renderThemeButton();
     };
-    applyTheme(explicit ? saved : preference.matches ? 'dark' : 'light');
+    // 最初のテーマは<head>のtheme-init.jsが描画前にdata-themeへ入れている。ここではボタンを同期するだけ。
+    renderThemeButton();
     document.getElementById('themeToggle').addEventListener('click', () => {
         const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         explicit = true;

@@ -40,6 +40,7 @@ test('CSP・Referer・SRI・古典スクリプトの順番', () => {
         assert.equal(attr(tag, 'crossorigin'), 'anonymous');
     }
     assert.deepEqual(tags('script').map(t => attr(t, 'src')), [
+        'theme-init.js',
         'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js',
         'i18n.js', 'osm-logic.js', 'script.js'

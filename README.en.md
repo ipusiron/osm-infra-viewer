@@ -342,9 +342,11 @@ osm-infra-viewer/
 │   ├── script.test.js        # Static checks on rendering and network code
 │   ├── i18n.test.js          # Dictionaries, data-i18n, and re-rendering from state
 │   ├── contrast.test.js      # Contrast computed from the CSS
+│   ├── theme-init.test.js    # Initial theme choice and where it loads
 │   └── format.test.js        # Line length and readability
 ├── .gitignore                # Untracked files
 ├── index.html                # Control panel, map, dialogs
+├── theme-init.js              # Sets the light or dark theme before the first paint
 ├── i18n.js                    # Japanese and English text, and the switch
 ├── osm-logic.js               # Pure logic, free of the DOM
 ├── script.js                  # DOM, Leaflet, and fetch
