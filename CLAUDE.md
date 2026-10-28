@@ -7,6 +7,7 @@ Day011の静的Webツールです。OpenStreetMapの21種別のインフラをLe
 
 ## ファイル構成
 
+- `theme-init.js`: 最初の描画の前に保存値・OS設定からテーマを決め、`<html>`の`data-theme`に入れる。`<head>`で同期読み込み
 - `i18n.js`: 日本語・英語の辞書と、`data-i18n`の適用・言語の保存・`languagechange`の発火
 - `osm-logic.js`: DOM・Leaflet・通信・現在時刻に依存しない純粋ロジック。文言は持たず、`labelKey`・`titleKey`・`headingKey`を返す
 - `script.js`: DOM構築、Leaflet操作、fetch、状態・タイマー・テーマの管理
